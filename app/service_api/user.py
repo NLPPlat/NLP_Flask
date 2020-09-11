@@ -9,8 +9,7 @@ from app import models
 # 注册
 @api.route('/user', methods=['POST'])
 def register():
-    user = models.User(username='admin', password='111111', roles=['admin', 'editor']).save()
-    return "success"
+    return
 
 
 # 登录

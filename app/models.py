@@ -19,7 +19,7 @@ class Dataset(db.DynamicDocument):
     id = db.SequenceField(primary_key=True)
     user = db.ReferenceField(User, required=True, reverse_delete_rule='CASCADE')
     taskType = db.StringField(required=True)
-    name = db.StringField(required=True)
+    taskName = db.StringField(required=True)
     desc = db.StringField()
     publicity = db.StringField(required=True)
     datetime = db.DateTimeField(default=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
