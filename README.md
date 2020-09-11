@@ -26,7 +26,7 @@ cd NLP_Flask
 python manage.py
 ```
 
-For postman http://localhost:9527
+For postman http://localhost:5000
 
 Copyright (c) 2020-present NJU_CK
 
