@@ -7,8 +7,11 @@ English | [简体中文](./README.zh-CN.md)
 - app
   - libs  外部库
   - process_manage_api  过程管理API
+  - data_manage_api  数据管理API
   - service 服务类API
   - utils  工具类
+  - spark  spark支持类
+  - nlp  nlp模型类
 
 ```
 
