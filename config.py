@@ -9,6 +9,8 @@ class DevelopmentConfig(Config):
     MONGODB_SETTINGS = {
         'db': 'nlpplat'
     }
+    UPLOADED_FILES_DEST = 'e:/ProjectData/NLPPlat'
+
 
 
 # 生产环境配置
