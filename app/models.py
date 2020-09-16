@@ -28,7 +28,7 @@ class Dataset(db.DynamicDocument):
 
 # 原始数据集
 class OriginalDataset(Dataset):
-    originFile = db.FileField(required=True)
+    originFile = db.StringField(required=True)
     originFileSize = db.StringField()
     label = db.ListField()
     title = db.StringField()
