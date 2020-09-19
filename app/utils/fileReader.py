@@ -1,8 +1,12 @@
 import csv
 
+
 def csvReader(file):
-    reader = csv.DictReader(file)
-    print(reader)
-    for row in reader:
-        print(row)
-    return 'list'
+    text = csv.DictReader(file)
+    i = 0
+    textList=[]
+    for row in text:
+        row['id'] = i
+        i = i + 1
+        textList.append(row)
+    return textList
