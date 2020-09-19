@@ -23,7 +23,7 @@ def trainFileUpload():
     executor.submit(trainFileUploadAnalyse(fileurl, trainFile))
     return "success"
 
-
+#训练数据集文件解析
 def trainFileUploadAnalyse(fileurl, trainFile):
     with open(fileurl, 'r') as f:
         trainFile.text = fileReader.csvReader(f)

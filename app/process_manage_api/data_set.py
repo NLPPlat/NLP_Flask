@@ -8,9 +8,10 @@ from app import models, files
 @api.route('/dataset/list', methods=['GET'])
 def datasetListGet():
     list=models.OriginalDataset.objects()
+    print('hello world')
     return {'code':200,'data':{'total':len(list),'items':list}}
 
-
+# 数据详情获取
 @api.route('/dataset/detail',methods=['GET'])
 def dataDetailGet():
-    return {'code':200,'data':{'items':[{'label':'hellosddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd'},{'label':'dsfe'}]}}
+    return {'code':200,'data':{'items':[{'label':'hed'},{'label':'dsfe'}]}}
