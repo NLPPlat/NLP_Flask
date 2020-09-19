@@ -17,7 +17,7 @@ class User(db.Document):
 # 数据集类
 class Dataset(db.DynamicDocument):
     id = db.SequenceField(primary_key=True)
-    user = db.ReferenceField(User, required=True, reverse_delete_rule='CASCADE')
+    username = db.StringField(required=True)
     taskType = db.StringField(required=True)
     taskName = db.StringField(required=True)
     desc = db.StringField()
@@ -30,7 +30,7 @@ class Dataset(db.DynamicDocument):
 class OriginalDataset(Dataset):
     originFile = db.StringField(required=True)
     originFileSize = db.StringField()
-    label = db.ListField()
-    title = db.StringField()
-    text1 = db.ListField()
-    text2 = db.ListField()
+    text = db.ListField()
+    status = db.StringField(required=True)
+
+
