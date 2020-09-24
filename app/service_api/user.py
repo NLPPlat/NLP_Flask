@@ -1,9 +1,9 @@
-from flask import request, render_template, jsonify
+from flask import request, jsonify
 from flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity, get_raw_jwt
 from werkzeug.security import generate_password_hash, check_password_hash
 from . import api
-from app import models
-from manage import jwt
+from app import models,jwt
+# from manage import jwt
 
 
 # 注册
@@ -67,7 +67,7 @@ def check_if_token_in_blacklist(decrypted_token):
 # 检查登出用户token集合blacklist的大小，大于max_token_count则开始清除最早的token
 def check_blacklist_size():
     if len(blacklist) > max_token_count:  # 暂设50
-        print(blacklist.pop())
+        blacklist.pop()
 
 
 # 登出
@@ -78,3 +78,4 @@ def logout():
     blacklist.add(token)
     check_blacklist_size()
     return jsonify({'code': 200, 'message': 'logout_success'})
+
