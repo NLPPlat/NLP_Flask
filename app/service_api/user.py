@@ -11,7 +11,6 @@ from manage import jwt
 def register():
     userinfo = request.json
     username = userinfo.get("username")
-    print(username)
     user = models.User.objects(username=username)
     if not user:
         name = userinfo.get("name")
