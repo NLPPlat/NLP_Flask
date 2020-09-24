@@ -26,11 +26,17 @@ class Dataset(db.DynamicDocument):
     meta = {'allow_inheritance': True}
 
 
+class TextContent(db.EmbeddedDocument):
+    label=db.StringField()
+    title=db.StringField()
+    text1=db.StringField()
+    text2=db.StringField()
+
 # 原始数据集
 class OriginalDataset(Dataset):
     originFile = db.StringField(required=True)
     originFileSize = db.StringField()
-    text = db.ListField()
+    text = db.EmbeddedDocumentListField(TextContent)
     status = db.StringField(required=True)
 
 
