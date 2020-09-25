@@ -31,4 +31,4 @@ def create_app(config_name):
     app.register_blueprint(process_manage_api.api,url_prefix='/process-manage')
     app.register_blueprint(data_manage_api.api,url_prefix='/data-manage')
     # return app
-    return app,jwt
+    return app

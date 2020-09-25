@@ -2,8 +2,7 @@ from flask import request, render_template, jsonify
 from flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity, get_raw_jwt
 from werkzeug.security import generate_password_hash, check_password_hash
 from . import api
-from app import models
-from manage import jwt
+from app import models,jwt
 
 
 # 注册
