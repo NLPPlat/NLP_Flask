@@ -1,21 +1,5 @@
-certifi==2020.6.20
-cffi @ file:///C:/ci/cffi_1598352710791/work
-click==7.1.2
-cryptography @ file:///C:/ci/cryptography_1598892079907/work
 Flask==1.1.2
-Flask-Cors @ file:///tmp/build/80754af9/flask-cors_1598886879133/work
-Flask-JWT-Extended @ file:///tmp/build/80754af9/flask-jwt-extended_1594159286182/work
+Flask-Cors
+Flask-JWT-Extended
 flask-mongoengine==0.9.5
-Flask-WTF==0.14.3
-idna @ file:///tmp/build/80754af9/idna_1593446292537/work
-itsdangerous==1.1.0
-Jinja2==2.11.2
-MarkupSafe==1.1.1
-mongoengine==0.20.0
-pycparser @ file:///tmp/build/80754af9/pycparser_1594388511720/work
-PyJWT==1.7.1
-pymongo==3.11.0
-six==1.15.0
-Werkzeug==1.0.1
-wincertstore==0.2
-WTForms==2.3.3
+flask-uploads

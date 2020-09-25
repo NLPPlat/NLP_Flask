@@ -1,5 +1,5 @@
 import datetime
-
+from werkzeug.security import generate_password_hash,check_password_hash
 from . import db
 
 
@@ -17,7 +17,7 @@ class User(db.Document):
 # 数据集类
 class Dataset(db.DynamicDocument):
     id = db.SequenceField(primary_key=True)
-    user = db.ReferenceField(User, required=True, reverse_delete_rule='CASCADE')
+    username = db.StringField(required=True)
     taskType = db.StringField(required=True)
     taskName = db.StringField(required=True)
     desc = db.StringField()
@@ -26,11 +26,17 @@ class Dataset(db.DynamicDocument):
     meta = {'allow_inheritance': True}
 
 
+class TextContent(db.EmbeddedDocument):
+    label=db.StringField()
+    title=db.StringField()
+    text1=db.StringField()
+    text2=db.StringField()
+
 # 原始数据集
 class OriginalDataset(Dataset):
-    originFile = db.FileField(required=True)
+    originFile = db.StringField(required=True)
     originFileSize = db.StringField()
-    label = db.ListField()
-    title = db.StringField()
-    text1 = db.ListField()
-    text2 = db.ListField()
+    text = db.EmbeddedDocumentListField(TextContent)
+    status = db.StringField(required=True)
+
+

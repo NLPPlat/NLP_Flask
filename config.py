@@ -6,9 +6,14 @@ class Config(object):
 class DevelopmentConfig(Config):
     DEBUG = True
     JWT_SECRET_KEY = 'SoftwareForNlp'
+    JWT_BLACKLIST_ENABLED=True
+    JWT_BLACKLIST_TOKEN_CHECKS=['access']
     MONGODB_SETTINGS = {
         'db': 'nlpplat'
     }
+    UPLOADED_FILES_DEST = 'e:/ProjectData/NLPPlat'
+    JSON_AS_ASCII=False
+
 
 
 # 生产环境配置
