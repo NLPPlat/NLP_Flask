@@ -1,6 +1,7 @@
 from flask import request, current_app
 from flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
 from concurrent.futures import ThreadPoolExecutor
+import json
 
 from . import api
 from app import models, files
@@ -26,7 +27,10 @@ def trainFileUpload():
 #训练数据集文件解析
 def trainFileUploadAnalyse(fileurl, trainFile):
     with open(fileurl, 'r') as f:
-        trainFile.text = fileReader.csvReader(f)
+        files = fileReader.csvReader(f)
+    for text in files:
+        textContent=models.TextContent().from_json(json.dumps(text))
+        trainFile.text.append(textContent)
     trainFile.status='解析完成'
     trainFile.save()
     return

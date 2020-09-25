@@ -14,4 +14,11 @@ def datasetListGet():
 # 数据详情获取
 @api.route('/dataset/detail',methods=['GET'])
 def dataDetailGet():
-    return {'code':200,'data':{'items':[{'label':'hed'},{'label':'dsfe'}]}}
+    id=request.args.get('id')
+    limit=int(request.args.get('limit'))
+    page=int(request.args.get('page'))
+    front=limit*(page-1)
+    end=limit*page
+    text=models.OriginalDataset.objects(id=id).first().text
+    res=text.filter()
+    return {'code':200,'data':{'items':res[front:end],'total':text.count()}}
