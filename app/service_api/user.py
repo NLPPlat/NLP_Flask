@@ -2,7 +2,7 @@ from flask import request, render_template, jsonify
 from flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity, get_raw_jwt
 from werkzeug.security import generate_password_hash, check_password_hash
 from . import api
-from app import models,jwt
+from app import models, jwt
 
 
 # 注册
@@ -16,7 +16,9 @@ def register():
         introduction = userinfo.get("introduction")
         password = userinfo.get("password")
         password_hash = generate_password_hash(password)
-        user = models.User(username=username, name=name, introduction=introduction, password=password_hash)
+        avatar = 'https://wpimg.wallstcn.com/f778738c-e4f8-4870-b634-56703b4acafe.gif'
+        user = models.User(username=username, name=name, introduction=introduction, password=password_hash,
+                           avatar=avatar)
         user.save()
         return jsonify({"code": 200, "message": "register_success"})
     else:
@@ -32,7 +34,7 @@ def login():
     user = models.User.objects(username=username).first()
     if user and check_password_hash(user.password, password):
         access_token = create_access_token(identity=username)
-        return jsonify({"code": 200, "message": "login_success", "data": {"token": access_token}})
+        return jsonify({"code": 200, "message": "login_success", "data": {"token": access_token, "username": username}})
     else:
         return jsonify({"code": 400, "message": "login_fail"})
 
@@ -43,6 +45,7 @@ def login():
 def getInfo():
     user = models.User.objects(username=get_jwt_identity()).first()
     return jsonify({"code": 200, "data": {
+        "username":user.username,
         "datetime": user.datetime,
         "roles": user.roles,
         "introduction": user.introduction,

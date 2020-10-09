@@ -8,6 +8,7 @@ class DevelopmentConfig(Config):
     JWT_SECRET_KEY = 'SoftwareForNlp'
     JWT_BLACKLIST_ENABLED=True
     JWT_BLACKLIST_TOKEN_CHECKS=['access']
+    JWT_ACCESS_TOKEN_EXPIRES = 10*24*60*60
     MONGODB_SETTINGS = {
         'db': 'nlpplat'
     }

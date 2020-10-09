@@ -1,5 +1,4 @@
 import datetime
-from werkzeug.security import generate_password_hash,check_password_hash
 from . import db
 
 
@@ -14,7 +13,7 @@ class User(db.Document):
     name = db.StringField()
 
 
-# 数据集类
+# 数据集超类
 class Dataset(db.DynamicDocument):
     id = db.SequenceField(primary_key=True)
     username = db.StringField(required=True)
@@ -25,12 +24,15 @@ class Dataset(db.DynamicDocument):
     datetime = db.DateTimeField(default=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     meta = {'allow_inheritance': True}
 
-
+# 文本内容
 class TextContent(db.EmbeddedDocument):
-    label=db.StringField()
-    title=db.StringField()
-    text1=db.StringField()
-    text2=db.StringField()
+    id = db.IntField()
+    label = db.DynamicField()
+    title = db.StringField()
+    text1 = db.StringField()
+    text2 = db.StringField()
+    delete = db.StringField()
+
 
 # 原始数据集
 class OriginalDataset(Dataset):
@@ -38,5 +40,9 @@ class OriginalDataset(Dataset):
     originFileSize = db.StringField()
     text = db.EmbeddedDocumentListField(TextContent)
     status = db.StringField(required=True)
+    annotationStatus = db.StringField(required=True)
+    annotationFormat = db.DynamicField()
 
-
+#预处理数据集
+class PreprocessDataset(Dataset):
+    text = db.EmbeddedDocumentListField(TextContent)

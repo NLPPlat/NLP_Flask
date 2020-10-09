@@ -5,7 +5,7 @@ import json
 
 from . import api
 from app import models, files
-from app.utils import fileReader
+from app.utils import file
 
 
 # 训练数据集文件上传
@@ -18,19 +18,21 @@ def trainFileUpload():
     fileurl = files.path(filename)
     trainFile = models.OriginalDataset(username=get_jwt_identity(), taskType=params.get('taskType'),
                                        taskName=params.get('taskName'),
-                                       desc=params.get('desc'), publicity=params.get('publicity'), originFile=fileurl,status='解析中')
+                                       desc=params.get('desc'), publicity=params.get('publicity'), originFile=fileurl,
+                                       status='解析中', annotationStatus='未开始')
     trainFile.save()
     executor = ThreadPoolExecutor(1)
     executor.submit(trainFileUploadAnalyse(fileurl, trainFile))
     return "success"
 
-#训练数据集文件解析
+
+# 训练数据集文件解析
 def trainFileUploadAnalyse(fileurl, trainFile):
     with open(fileurl, 'r') as f:
-        files = fileReader.csvReader(f)
+        files = file.csvReader(f)
     for text in files:
-        textContent=models.TextContent().from_json(json.dumps(text))
+        textContent = models.TextContent().from_json(json.dumps(text))
         trainFile.text.append(textContent)
-    trainFile.status='解析完成'
+    trainFile.status = '解析完成'
     trainFile.save()
     return

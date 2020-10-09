@@ -15,6 +15,8 @@ def create_app(config_name):
     :param config_name: str 配置名称：{develop,product}
     :return:
     """
+
+    # 初始化
     app = Flask(__name__)
     app.config.from_object(config_map.get(config_name))
 
@@ -24,11 +26,14 @@ def create_app(config_name):
     jwt.init_app(app)
     configure_uploads(app, files)
 
+    # 注册蓝图
+    from app import common_api
     from app import service_api
     from app import process_manage_api
     from app import data_manage_api
+    app.register_blueprint(common_api.api,url_prefix='/common')
     app.register_blueprint(service_api.api, url_prefix='/service')
     app.register_blueprint(process_manage_api.api,url_prefix='/process-manage')
     app.register_blueprint(data_manage_api.api,url_prefix='/data-manage')
-    # return app
+
     return app
