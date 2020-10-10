@@ -6,6 +6,7 @@ import json
 from . import api
 from app import models, files
 from app.utils import file
+from app.models.dataset import *
 
 
 # 训练数据集文件上传
@@ -16,10 +17,10 @@ def trainFileUpload():
     params = request.form
     filename = files.save(uploadFile)
     fileurl = files.path(filename)
-    trainFile = models.OriginalDataset(username=get_jwt_identity(), taskType=params.get('taskType'),
+    trainFile = OriginalDataset(username=get_jwt_identity(), taskType=params.get('taskType'),
                                        taskName=params.get('taskName'),
-                                       desc=params.get('desc'), publicity=params.get('publicity'), originFile=fileurl,
-                                       status='解析中', annotationStatus='未开始')
+                                       desc=params.get('desc'), publicity=params.get('publicity'), originalFile=fileurl,
+                                       analyseStatus='解析中', annotationStatus='未开始')
     trainFile.save()
     executor = ThreadPoolExecutor(1)
     executor.submit(trainFileUploadAnalyse(fileurl, trainFile))
@@ -31,8 +32,8 @@ def trainFileUploadAnalyse(fileurl, trainFile):
     with open(fileurl, 'r') as f:
         files = file.csvReader(f)
     for text in files:
-        textContent = models.TextContent().from_json(json.dumps(text))
-        trainFile.text.append(textContent)
-    trainFile.status = '解析完成'
+        textContent = TextContent().from_json(json.dumps(text))
+        trainFile.originalData.append(textContent)
+    trainFile.analyseStatus = '解析完成'
     trainFile.save()
     return

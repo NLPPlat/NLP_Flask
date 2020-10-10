@@ -1,16 +1,5 @@
 import datetime
-from . import db
-
-
-# 用户类
-class User(db.Document):
-    username = db.StringField(required=True, unique=True)
-    password = db.StringField(required=True)
-    roles = db.ListField(required=True, default=['editor'])
-    datetime = db.DateTimeField(default=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-    introduction = db.StringField()
-    avatar = db.StringField()
-    name = db.StringField()
+from app import db
 
 
 # 数据集超类
@@ -24,7 +13,8 @@ class Dataset(db.DynamicDocument):
     datetime = db.DateTimeField(default=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     meta = {'allow_inheritance': True}
 
-# 文本内容
+
+# 文本向量
 class TextContent(db.EmbeddedDocument):
     id = db.IntField()
     label = db.DynamicField()
@@ -36,13 +26,14 @@ class TextContent(db.EmbeddedDocument):
 
 # 原始数据集
 class OriginalDataset(Dataset):
-    originFile = db.StringField(required=True)
-    originFileSize = db.StringField()
-    text = db.EmbeddedDocumentListField(TextContent)
-    status = db.StringField(required=True)
+    originalFile = db.StringField(required=True)
+    originalFileSize = db.StringField()
+    originalData = db.EmbeddedDocumentListField(TextContent)
+    analyseStatus = db.StringField(required=True)
     annotationStatus = db.StringField(required=True)
     annotationFormat = db.DynamicField()
 
 #预处理数据集
 class PreprocessDataset(Dataset):
-    text = db.EmbeddedDocumentListField(TextContent)
+    preprocessStatus = db.ListField(default=[{'preprocessName':'原始文本','preprocessType':'无','sparkSupport':False,'preprocessStatus':'已完成'}])
+    originalData = db.EmbeddedDocumentListField(TextContent)
