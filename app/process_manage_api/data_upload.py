@@ -4,9 +4,11 @@ from concurrent.futures import ThreadPoolExecutor
 import json
 
 from . import api
+from manage import celery
 from app import models, files
 from app.utils import file
 from app.models.dataset import *
+from app.models.venation import *
 
 
 # 训练数据集文件上传
@@ -22,12 +24,19 @@ def trainFileUpload():
                                        desc=params.get('desc'), publicity=params.get('publicity'), originalFile=fileurl,
                                        analyseStatus='解析中', annotationStatus='未开始')
     trainFile.save()
-    executor = ThreadPoolExecutor(1)
-    executor.submit(trainFileUploadAnalyse(fileurl, trainFile))
+    datasetid=int(trainFile.id)
+    trainFile.ancestor=datasetid
+    trainFile.save()
+    originalDatasetNode=DatasetNode(parent=-1,id=datasetid,username=trainFile.username,taskName=trainFile.taskName)
+    venation=Venation(ancestor=datasetid)
+    venation.originalDataset.append(originalDatasetNode)
+    venation.save()
+    trainFileUploadAnalyse.delay(fileurl, trainFile)
     return "success"
 
 
 # 训练数据集文件解析
+@celery.task
 def trainFileUploadAnalyse(fileurl, trainFile):
     with open(fileurl, 'r') as f:
         files = file.csvReader(f)

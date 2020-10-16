@@ -1,6 +1,7 @@
 from app.models.dataset import *
 
 
+# 数据集拷贝
 def copy(datasetInit, datasetInitType, copyDes, username):
     if datasetInitType == '原始数据集' and copyDes == '原始数据集':
         datasetDes = OriginalDataset(username=username, taskType=datasetInit.taskType,

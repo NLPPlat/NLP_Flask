@@ -1,5 +1,12 @@
 import csv
+import os
 
+
+def fileDelete(paths):
+    for path in paths:
+        if os.path.exists(path):
+            os.remove(path)
+    return
 
 def csvReader(file):
     text = csv.DictReader(file)
@@ -8,8 +15,6 @@ def csvReader(file):
     for row in text:
         row['id'] = i
         row['delete'] = '未删除'
-        if 'label' not in row:
-            row['label']=''
         i = i + 1
         textList.append(row)
     return textList

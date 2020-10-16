@@ -1,5 +1,4 @@
-# coding:utf-8
-
+# 返回值代码
 class RET:
     OK                    = 200
     CREATED               = 201

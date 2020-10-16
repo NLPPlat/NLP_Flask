@@ -1,5 +1,9 @@
+python==3.8.5
 Flask==1.1.2
 Flask-Cors
 Flask-JWT-Extended
 flask-mongoengine==0.9.5
 flask-uploads
+celery
+redis
+eventlet==0.26.0

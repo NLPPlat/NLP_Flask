@@ -7,7 +7,10 @@ from . import api
 from app import models, files
 from app.utils.response_code import RET
 from app.utils.dataset import copy
+from app.utils.file import fileDelete
 from app.models.dataset import *
+
+
 
 
 # 数据集列表获取
@@ -32,8 +35,8 @@ def datasetListFetch():
                      'annotationStatus']
     elif datasetType == '标注数据集':
         annotationStatusFilter = info.getlist('annotationStatus[]')
-        queryList = ['id', 'username', 'taskType', 'taskName', 'publicity', 'datetime', 'analyseStatus',
-                     'annotationStatus']
+        queryList = ['id', 'username', 'taskType', 'taskName','datetime', 'analyseStatus',
+                     'annotationStatus','annotationPublicity']
     elif datasetType == '预处理数据集':
         queryList = ['id', 'username', 'taskType', 'taskName', 'publicity', 'datetime']
 
@@ -83,3 +86,63 @@ def datasetCopy():
     # 拷贝
     copy(datasetInit, datasetInitType, copyDes, username)
     return {'code': RET.OK}
+
+
+# 数据集删除
+@api.route('/dataset/dataset', methods=['DELETE'])
+@jwt_required
+def datasetDelete():
+    # 读取数据
+    info = request.json
+    datasetID = info.get('datasetid')
+    datasetType = info.get('datasetType')
+    username = get_jwt_identity()
+
+    # 查找判断并删除
+    if datasetType=='原始数据集':
+        datasetQuery = OriginalDataset.objects(id=int(datasetID)).first()
+        if datasetQuery and username == datasetQuery.username:
+            fileDelete([datasetQuery.originalFile])
+            datasetQuery.delete()
+    elif datasetType=='预处理数据集':
+        datasetQuery = PreprocessDataset.objects(id=int(datasetID)).first()
+        if datasetQuery and username == datasetQuery.username:
+            datasetQuery.delete()
+
+    return {'code':RET.OK}
+
+
+# 任务类型获取
+@api.route('/dataset/dataset/ID/tasktype', methods=['GET'])
+@jwt_required
+def tasktypeFetch():
+    # 读取基本数据
+    info = request.values
+    datasetID= int(info.get('datasetid'))
+    datasetType = info.get('datasetType')
+    username=get_jwt_identity()
+
+    # 查找数据集
+    if datasetType=='原始数据集':
+        datasetQuery = OriginalDataset.objects(id=int(datasetID)).first()
+        if datasetQuery and username == datasetQuery.username:
+            taskType=datasetQuery.taskType
+    return {'code':RET.OK,'data':{'taskType':taskType}}
+
+
+
+# 按group获取vector
+@api.route('/dataset/dataset/ID/group', methods=['GET'])
+@jwt_required
+def groupVectorsFetch():
+    # 读取基本数据
+    info = request.values
+    datasetID = int(info.get('datasetid'))
+    group= info.get('group')
+    username=get_jwt_identity()
+
+    # 数据库查询
+    datasetQuery = OriginalDataset.objects(id=int(datasetID)).first()
+    if datasetQuery and username == datasetQuery.username:
+        vectorQuery = datasetQuery.originalData.filter(group=group)
+    return {'code':RET.OK,'data':{'vectors':vectorQuery}}
