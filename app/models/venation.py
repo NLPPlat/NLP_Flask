@@ -5,7 +5,7 @@ from app import db
 # 数据节点
 class DatasetNode(db.EmbeddedDocument):
     parent = db.IntField(default=-1)
-    childs = db.ListField()
+    children = db.ListField()
     id=db.IntField()
     username = db.StringField()
     taskName = db.StringField()

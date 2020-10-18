@@ -8,6 +8,7 @@ class Dataset(db.DynamicDocument):
     username = db.StringField(required=True)
     taskType = db.StringField(required=True)
     taskName = db.StringField(required=True)
+    datasetType = db.StringField(required=True)
     ancestor = db.IntField()
     desc = db.StringField()
     publicity = db.StringField(required=True)

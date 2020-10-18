@@ -6,7 +6,7 @@ import json
 from . import api
 from manage import celery
 from app import models, files
-from app.utils import file
+from app.utils import file_utils
 from app.models.dataset import *
 from app.models.venation import *
 
@@ -20,7 +20,7 @@ def trainFileUpload():
     filename = files.save(uploadFile)
     fileurl = files.path(filename)
     trainFile = OriginalDataset(username=get_jwt_identity(), taskType=params.get('taskType'),
-                                       taskName=params.get('taskName'),
+                                       taskName=params.get('taskName'),datasetType='原始数据集',
                                        desc=params.get('desc'), publicity=params.get('publicity'), originalFile=fileurl,
                                        analyseStatus='解析中', annotationStatus='未开始')
     trainFile.save()
@@ -38,8 +38,7 @@ def trainFileUpload():
 # 训练数据集文件解析
 @celery.task
 def trainFileUploadAnalyse(fileurl, trainFile):
-    with open(fileurl, 'r') as f:
-        files = file.csvReader(f)
+    files = file_utils.fileReader(fileurl)
     for text in files:
         textContent = TextContent().from_json(json.dumps(text))
         trainFile.originalData.append(textContent)

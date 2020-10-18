@@ -7,7 +7,7 @@ from . import api
 from app import models, files
 from app.models.dataset import *
 from app.utils.response_code import RET
-from app.utils.data_process_util import sentenceCut
+from app.utils.data_process_utils import sentenceCut
 
 
 # 数据详情获取

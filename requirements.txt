@@ -7,3 +7,6 @@ flask-uploads
 celery
 redis
 eventlet==0.26.0
+chardet==3.0.4
+xlrd==1.2.0
+python_docx==0.8.10

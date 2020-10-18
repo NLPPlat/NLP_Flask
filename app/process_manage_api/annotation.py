@@ -6,6 +6,7 @@ import json
 from . import api
 from app import models, files
 from app.models.dataset import *
+from app.utils.response_code import RET
 
 
 # 标注任务配置
@@ -27,7 +28,7 @@ def annotationConfig():
             text1Tags = taskInfo.get('text1Tags')
             text2Tags = taskInfo.get('text2Tags')
             taskQuery.annotationFormat = {'textTags': textTags, 'text1Tags': text1Tags, 'text2Tags': text2Tags}
-        elif taskType == '文本排序学习' or taskType == '文本摘要':
+        elif taskType == '文本排序学习' or taskType == '文本摘要' or taskType=='情感分析/意图识别':
             annotationConfig = taskInfo.get('annotationFormat')
             taskQuery.annotationFormat = annotationConfig
         elif taskType == '通用单文本分类':
@@ -81,7 +82,7 @@ def uplaodAnnotationTags():
     # 查询
     datasetQuery = OriginalDataset.objects(id=int(datasetID)).first()
     if datasetQuery and username == datasetQuery.username:
-        if datasetQuery.taskType == '文本排序学习' and datasetQuery.annotationFormat == '列表标注' or datasetQuery.taskType == '文本摘要' and datasetQuery.annotationFormat == '抽取式':
+        if datasetQuery.taskType == '文本排序学习' or datasetQuery.taskType == '文本摘要' and datasetQuery.annotationFormat == '抽取式' or datasetQuery.taskType == '情感分析/意图识别' and datasetQuery.annotationFormat['level'] == '句子级':
             vectors = info.get('vectors')
             for item in vectors:
                 vectorQuery = datasetQuery.originalData.filter(id=int(item['id']))
@@ -98,3 +99,52 @@ def uplaodAnnotationTags():
             vectorQuery.save()
 
     return {'code': 200}
+
+
+# 获取标注状态
+@api.route('annotation/status/ID',methods=['GET'])
+@jwt_required
+def fetchAnnotationStatus():
+    # 读取基本数据
+    info = request.values
+    datasetID = info.get("datasetid")
+    username = get_jwt_identity()
+
+    # 查询状态
+    datasetQuery = OriginalDataset.objects(id=int(datasetID)).first()
+    if datasetQuery and username == datasetQuery.username:
+        status=datasetQuery.annotationStatus
+    return {'code':RET.OK,'data':{'annotationStatus':status}}
+
+
+#更新标注状态
+@api.route('annotation/status/ID',methods=['POST'])
+@jwt_required
+def completeAnnotationStatus():
+    # 读取基本数据
+    info = request.json
+    datasetID = info.get("datasetid")
+    username = get_jwt_identity()
+
+    # 查询状态
+    datasetQuery = OriginalDataset.objects(id=int(datasetID)).first()
+    if datasetQuery and username == datasetQuery.username:
+        datasetQuery.annotationStatus='标注完成'
+        datasetQuery.save()
+    return {'code':RET.OK}
+
+# 标注进度查询
+@api.route('annotation/process/ID',methods=['GET'])
+@jwt_required
+def fetchAnnotationProcess():
+    # 读取基本数据
+    info = request.values
+    datasetID = info.get("datasetid")
+    username = get_jwt_identity()
+
+    # 查询数量
+    datasetQuery = OriginalDataset.objects(id=int(datasetID)).first()
+    if datasetQuery and username == datasetQuery.username:
+        nolabelQuery=datasetQuery.originalData.filter(label='')
+        allQuery=datasetQuery.originalData.filter()
+    return {'code':RET.OK,'data':{'nolabelCount':len(nolabelQuery),'allCount':len(allQuery)}}
