@@ -15,7 +15,7 @@ class DevelopmentConfig(Config):
     UPLOADED_FILES_DEST = 'e:/ProjectData/NLPPlat'
     JSON_AS_ASCII=False
     CELERY_BROKER_URL = 'redis://127.0.0.1:6379/0'
-    # CELERY_RESULT_BACKEND = 'redis://localhost:6379/1'
+    CELERY_RESULT_BACKEND =  'mongodb://127.0.0.1:27017'
     CELERY_TASK_SERIALIZER = 'pickle'
     CELERY_RESULT_SERIALIZER = 'pickle'
     CELERY_ACCEPT_CONTENT = ['pickle', 'json']

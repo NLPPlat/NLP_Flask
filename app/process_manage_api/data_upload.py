@@ -20,15 +20,16 @@ def trainFileUpload():
     filename = files.save(uploadFile)
     fileurl = files.path(filename)
     trainFile = OriginalDataset(username=get_jwt_identity(), taskType=params.get('taskType'),
-                                       taskName=params.get('taskName'),datasetType='原始数据集',
-                                       desc=params.get('desc'), publicity=params.get('publicity'), originalFile=fileurl,
-                                       analyseStatus='解析中', annotationStatus='未开始')
+                                taskName=params.get('taskName'), datasetType='原始数据集',
+                                desc=params.get('desc'), publicity=params.get('publicity'), originalFile=fileurl,
+                                analyseStatus='解析中', annotationStatus='未开始')
     trainFile.save()
-    datasetid=int(trainFile.id)
-    trainFile.ancestor=datasetid
+    datasetid = int(trainFile.id)
+    trainFile.ancestor = datasetid
     trainFile.save()
-    originalDatasetNode=DatasetNode(parent=-1,id=datasetid,username=trainFile.username,taskName=trainFile.taskName)
-    venation=Venation(ancestor=datasetid)
+    originalDatasetNode = DatasetNode(parent=-1, id=datasetid, username=trainFile.username, taskName=trainFile.taskName,
+                                      datetime=trainFile.datetime, taskType=trainFile.taskType)
+    venation = Venation(ancestor=datasetid)
     venation.originalDataset.append(originalDatasetNode)
     venation.save()
     trainFileUploadAnalyse.delay(fileurl, trainFile)

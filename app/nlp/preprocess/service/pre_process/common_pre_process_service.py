@@ -7,7 +7,7 @@
 @Motto：ABC(Always Be Coding)
 
 """
-from com.sora.service.pre_process_service import PreProcessService
+from app.nlp.preprocess.service.pre_process_service import PreProcessService
 
 
 class CommonPreProcessService(PreProcessService):

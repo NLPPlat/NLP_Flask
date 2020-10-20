@@ -9,7 +9,7 @@
 """
 import jieba.posseg as posseg
 import jieba
-from com.sora.utils.pre_process_util import PreProcessUtil
+from app.nlp.preprocess.utils.pre_process_util import PreProcessUtil
 
 
 class JiebaUtil(PreProcessUtil):

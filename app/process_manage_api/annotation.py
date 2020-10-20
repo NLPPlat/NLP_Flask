@@ -134,9 +134,9 @@ def completeAnnotationStatus():
     return {'code':RET.OK}
 
 # 标注进度查询
-@api.route('annotation/process/ID',methods=['GET'])
+@api.route('annotation/progress/ID',methods=['GET'])
 @jwt_required
-def fetchAnnotationProcess():
+def fetchAnnotationProgress():
     # 读取基本数据
     info = request.values
     datasetID = info.get("datasetid")

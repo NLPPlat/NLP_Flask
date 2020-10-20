@@ -7,7 +7,9 @@
 @Motto：ABC(Always Be Coding)
 
 """
-from com.sora.service.pre_process_service import PreProcessService
+
+
+from app.nlp.preprocess.service.pre_process_service import PreProcessService
 from pyspark import SparkConf, SparkContext
 
 class SparkPreProcessService(PreProcessService):

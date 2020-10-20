@@ -7,10 +7,10 @@
 @Motto：ABC(Always Be Coding)
 
 """
-from com.sora.utils.pre_process.jieba_util import JiebaUtil
+from app.nlp.preprocess.utils.pre_process.jieba_util import JiebaUtil
 from abc import abstractmethod
 
-from com.sora.utils.pre_process_util import PreProcessUtil
+from app.nlp.preprocess.utils.pre_process_util import PreProcessUtil
 
 
 class PreProcessService:

@@ -21,7 +21,7 @@ def dataDetailGet():
     end = limit * page
     # 数据库查询
     id = request.args.get('id')
-    data = OriginalDataset.objects(id=id).first()
+    data = OriginalDataset.objects(id=int(id)).first()
     res = data.originalData.filter(delete='未删除')
     return {'code': 200, 'data': {'items': res[front:end], 'total': res.count(), 'taskType': data.taskType,'groupOn':data.groupOn}}
 

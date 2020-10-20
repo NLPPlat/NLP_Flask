@@ -26,6 +26,12 @@ class TextContent(db.EmbeddedDocument):
     text2 = db.DynamicField()
     delete = db.StringField()
 
+# 预处理向量
+class PreprocessObject(db.EmbeddedDocument):
+    id=db.IntField()
+    type=db.StringField()
+    data=db.DynamicField()
+
 
 # 原始数据集
 class OriginalDataset(Dataset):
@@ -41,9 +47,5 @@ class OriginalDataset(Dataset):
 #预处理数据集
 class PreprocessDataset(Dataset):
     preprocessStatus = db.ListField(default=[{'id':0,'preprocessName':'原始文本','preprocessType':'无','previousProcessID':'无','sparkSupport':False,'preprocessStatus':'已完成'}])
-    originalData = db.EmbeddedDocumentListField(TextContent)
-    cut = db.EmbeddedDocumentListField(TextContent)
-    stopwords = db.EmbeddedDocumentListField(TextContent)
-    postagging = db.EmbeddedDocumentListField(TextContent)
-    keywords = db.EmbeddedDocumentListField(TextContent)
+    data = db.EmbeddedDocumentListField(PreprocessObject)
 

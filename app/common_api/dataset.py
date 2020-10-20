@@ -69,6 +69,38 @@ def datasetListFetch():
     return {'code': RET.OK, 'data': {'total': datasetList.count(), 'items': datasetList[front:end]}}
 
 
+# 数据集ID列表获取
+@api.route('/dataset/dataset/IDs', methods=['GET'])
+@jwt_required
+def datasetIDListFetch():
+    # 读取基本数据
+    info = request.values
+    username = get_jwt_identity()
+    datasetType = info.get('datasetType')
+
+    queryList = ['id', 'taskName']
+    datasetQuery=Dataset.objects(Q(username=username) & Q(datasetType=datasetType)).scalar(*queryList)
+    return {'code':RET.OK,'data':{'items':datasetQuery}}
+
+
+# 数据集信息列表获取
+# @api.route('/dataset/dataset/info', methods=['GET'])
+# @jwt_required
+# def datasetInfoListFetch():
+#     # 读取基本数据
+#     info = request.values
+#     datasetidList = info.getlist('datasetidList[]')
+#     username = get_jwt_identity()
+#
+#     #查询数据库
+#     queryList = ['id', 'username', 'taskType', 'taskName', 'desc', 'publicity', 'datetime', 'analyseStatus',
+#                  'annotationStatus']
+#     datasetQuery=Dataset.objects(id__in=datasetidList)
+#     return {'code':RET.OK,'data':{'items':datasetQuery}}
+
+
+
+
 # 数据集拷贝
 @api.route('/dataset/dataset', methods=['POST'])
 @jwt_required
@@ -84,8 +116,8 @@ def datasetCopy():
         datasetInit = OriginalDataset.objects(id=int(datasetInitID)).first()
         venationInit = Venation.objects(ancestor=int(datasetInitID)).first()
     # 拷贝
-    copy(datasetInit, datasetInitType, copyDes, username, venationInit)
-    return {'code': RET.OK}
+    datasetDesID=copy(datasetInit, datasetInitType, copyDes, username, venationInit)
+    return {'code': RET.OK,'data':{'datasetid':datasetDesID}}
 
 
 # 数据集删除

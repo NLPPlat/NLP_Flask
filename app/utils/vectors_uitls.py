@@ -1,5 +1,6 @@
-from app.models.dataset import TextContent
+from app.models.dataset import *
 import json
+from app import db
 
 # 预处理数据库与中文步骤映射表
 preprocessMap = {
@@ -10,34 +11,30 @@ preprocessMap = {
 }
 
 
-
-
 # 从数据库中读取向量
-def getVectorsFromPreprocessDataset(dataset, preprocessChnName):
-    # 获得英文名
-    if preprocessChnName in preprocessMap:
-        preprocessName = preprocessMap[preprocessChnName]
-    else:
-        preprocessName = preprocessChnName
+def getVectorsFromPreprocessDataset(dataset, preprocessIndex):
 
     # 读取数据
-    vectors = dataset[preprocessName]
+    vectorsQuery = dataset.data.filter(id=preprocessIndex).first()
+    vectors=vectorsQuery.data
 
-    return vectors
+    # 转换原向量
+    vectorList = []
+    for vector in vectors:
+        vectorList.append(vector.copy())
+
+    return vectorList
 
 
 # 向量回填数据库
-def setVectorsToreprocessDataset(dataset, preprocessChnName, vectors):
-    # 获得英文名
-    if preprocessChnName in preprocessMap:
-        preprocessName = preprocessMap[preprocessChnName]
-    else:
-        preprocessName = preprocessChnName
-
+def setVectorsToPreprocessDataset(dataset, preprocessIndex, vectors):
     # 存入数据库
+    preprocessObj=PreprocessObject(id=preprocessIndex)
+    preprocessObj.data=[]
     for vector in vectors:
         textContent = TextContent().from_json(json.dumps(vector))
-        dataset[preprocessName].append(textContent)
+        preprocessObj.data.append(textContent)
+    dataset.data.append(preprocessObj)
     dataset.save()
 
     return

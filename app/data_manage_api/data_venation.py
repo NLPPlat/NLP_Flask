@@ -18,7 +18,7 @@ from app.models.venation import *
 def datasetListFetch():
     # 读取基本数据
     info = request.values
-    datasetID = int(info.get('datasetid'))
+    datasetID = info.get('datasetid')
     username = get_jwt_identity()
 
     # 查询数据库，寻找脉络

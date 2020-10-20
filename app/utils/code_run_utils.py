@@ -1,6 +1,9 @@
 import sys
 import traceback
 
+from app.utils.global_utils import *
+# from app.dataAPI import preprocess
+
 # 储存结果
 result = []
 
@@ -16,7 +19,8 @@ class __Autonomy__(object):
         pass
 
 # 代码执行
-def codeRunUtil(code):
+def codeRunUtil(code,datasetIDForUse):
+    setDataset(datasetIDForUse)
     code=code+"\noperator=Operator()"+"\nglobal result"+"\nresult=operator.operator()"
     current = sys.stdout
     a = __Autonomy__()

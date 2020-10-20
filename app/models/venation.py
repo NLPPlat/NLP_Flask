@@ -6,9 +6,11 @@ from app import db
 class DatasetNode(db.EmbeddedDocument):
     parent = db.IntField(default=-1)
     children = db.ListField()
-    id=db.IntField()
+    id = db.IntField()
     username = db.StringField()
     taskName = db.StringField()
+    taskType = db.StringField()
+    datetime = db.DateTimeField()
 
 
 # 数据脉络
