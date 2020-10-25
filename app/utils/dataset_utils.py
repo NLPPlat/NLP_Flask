@@ -23,8 +23,10 @@ def copy(datasetInit, datasetInitType, copyDes, username, venationInit):
     elif datasetInitType == '原始数据集' and copyDes == '预处理数据集':
         datasetDes = PreprocessDataset(username=username, taskType=datasetInit.taskType,
                                        taskName=datasetInit.taskName, datasetType='预处理数据集',
-                                       desc=datasetInit.desc, publicity=datasetInit.publicity)
-        preprocessObj = PreprocessObject(id=0, type='vectors', data=datasetInit.originalData)
+                                       desc=datasetInit.desc, publicity=datasetInit.publicity,
+                                       annotationFormat=datasetInit.annotationFormat)
+        data = {'vectors': datasetInit.originalData}
+        preprocessObj = PreprocessObject(id=0, preprocessName='原始数据', preprocessType='无', data=data)
         datasetDes.data.append(preprocessObj)
         datasetDes.ancestor = datasetInit.ancestor
         datasetNodeDes = DatasetNode(parent=datasetInit.id, id=datasetDes.id, username=datasetDes.username,

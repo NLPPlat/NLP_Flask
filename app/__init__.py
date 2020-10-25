@@ -2,13 +2,11 @@ from flask import Flask
 from flask_mongoengine import MongoEngine
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
-from flask_uploads import UploadSet, configure_uploads
-from celery import Celery
+from celery import Celery, platforms
 from config import config_map
 
 db = MongoEngine()
 jwt = JWTManager()
-files = UploadSet('files')
 
 
 # 工厂模式创建flask app
@@ -28,7 +26,6 @@ def create_app(config_name):
     # 初始化
     db.init_app(app)
     jwt.init_app(app)
-    configure_uploads(app, files)
 
     return app
 
@@ -57,6 +54,7 @@ def create_celery(app):
 
     )
     celery.conf.update(app.config)
+    platforms.C_FORCE_ROOT=True
 
     class ContextTask(celery.Task):
         def __call__(self, *args, **kwargs):

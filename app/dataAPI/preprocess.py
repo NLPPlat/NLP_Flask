@@ -9,10 +9,10 @@ from app.utils.dataset_utils import copy
 from app.utils.file_utils import fileDelete
 from app.models.dataset import *
 from app.models.venation import *
-from app.utils.vectors_uitls import getVectorsFromPreprocessDataset
+from app.utils.vectors_uitls import getDataFromPreprocessDataset
 
 
 def getPreprocessData(preprocessID):
     datasetQuery=PreprocessDataset.objects(id=int(getDataset())).first()
-    vectors=getVectorsFromPreprocessDataset(datasetQuery,preprocessID)
+    vectors=getDataFromPreprocessDataset(datasetQuery, preprocessID)
     return vectors

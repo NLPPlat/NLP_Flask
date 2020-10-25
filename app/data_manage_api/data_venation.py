@@ -4,7 +4,6 @@ from mongoengine import Q
 import json
 
 from . import api
-from app import models, files
 from app.utils.response_code import RET
 from app.utils.dataset_utils import copy
 from app.utils.file_utils import fileDelete

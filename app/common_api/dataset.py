@@ -1,19 +1,17 @@
-from flask import request, current_app, jsonify
-from flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
+from flask import request
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from mongoengine import Q
-import json
 
 from . import api
-from app import models, files
-from app.utils.response_code import RET
-from app.utils.dataset_utils import copy
-from app.utils.file_utils import fileDelete
 from app.models.dataset import *
 from app.models.venation import *
+from app.utils.response_code import *
+from app.utils.dataset_utils import *
+from app.utils.file_utils import *
 
 
 # 数据集列表获取
-@api.route('/dataset/dataset', methods=['GET'])
+@api.route('/dataset/datasets', methods=['GET'])
 @jwt_required
 def datasetListFetch():
     # 读取基本数据
@@ -69,40 +67,8 @@ def datasetListFetch():
     return {'code': RET.OK, 'data': {'total': datasetList.count(), 'items': datasetList[front:end]}}
 
 
-# 数据集ID列表获取
-@api.route('/dataset/dataset/IDs', methods=['GET'])
-@jwt_required
-def datasetIDListFetch():
-    # 读取基本数据
-    info = request.values
-    username = get_jwt_identity()
-    datasetType = info.get('datasetType')
-
-    queryList = ['id', 'taskName']
-    datasetQuery=Dataset.objects(Q(username=username) & Q(datasetType=datasetType)).scalar(*queryList)
-    return {'code':RET.OK,'data':{'items':datasetQuery}}
-
-
-# 数据集信息列表获取
-# @api.route('/dataset/dataset/info', methods=['GET'])
-# @jwt_required
-# def datasetInfoListFetch():
-#     # 读取基本数据
-#     info = request.values
-#     datasetidList = info.getlist('datasetidList[]')
-#     username = get_jwt_identity()
-#
-#     #查询数据库
-#     queryList = ['id', 'username', 'taskType', 'taskName', 'desc', 'publicity', 'datetime', 'analyseStatus',
-#                  'annotationStatus']
-#     datasetQuery=Dataset.objects(id__in=datasetidList)
-#     return {'code':RET.OK,'data':{'items':datasetQuery}}
-
-
-
-
-# 数据集拷贝
-@api.route('/dataset/dataset', methods=['POST'])
+# 数据集生成（拷贝）
+@api.route('/dataset/datasets', methods=['POST'])
 @jwt_required
 def datasetCopy():
     # 读取数据
@@ -116,12 +82,57 @@ def datasetCopy():
         datasetInit = OriginalDataset.objects(id=int(datasetInitID)).first()
         venationInit = Venation.objects(ancestor=int(datasetInitID)).first()
     # 拷贝
-    datasetDesID=copy(datasetInit, datasetInitType, copyDes, username, venationInit)
-    return {'code': RET.OK,'data':{'datasetid':datasetDesID}}
+    datasetDesID = copy(datasetInit, datasetInitType, copyDes, username, venationInit)
+    return {'code': RET.OK, 'data': {'datasetid': datasetDesID}}
 
 
-# 数据集删除
-@api.route('/dataset/dataset', methods=['DELETE'])
+# 某个数据集信息获取
+@api.route('/dataset/datasets/ID', methods=['GET'])
+@jwt_required
+def datasetInfoFetch():
+    # 读取基本数据
+    info = request.values
+    datasetID = int(info.get('datasetid'))
+    username = get_jwt_identity()
+
+    # 查找数据集
+    datasetQuery = Dataset.objects(id=int(datasetID)).first()
+    if datasetQuery and username == datasetQuery.username:
+        datasetType = datasetQuery.datasetType
+        if datasetType == '原始数据集':
+            queryList = ['id', 'username', 'taskType', 'taskName', 'desc', 'publicity', 'datetime', 'analyseStatus',
+                         'annotationStatus', 'annotationPublicity']
+        elif datasetType == '预处理数据集':
+            queryList = ['id', 'username', 'taskType', 'taskName', 'desc', 'publicity', 'datetime']
+        dataResult = {}
+        for item in queryList:
+            dataResult[item]=datasetQuery[item]
+    return {'code': RET.OK, 'data': dataResult}
+
+
+# 某个数据集部分信息修改
+@api.route('dataset/datasets/ID', methods=['PATCH'])
+@jwt_required
+def datasetInfoVerity():
+    # 读取数据集信息
+    info = request.json
+    datasetID = info.get('datasetid')
+    taskName = info.get('taskName')
+    desc = info.get('desc')
+    username = get_jwt_identity()
+
+    # 修改任务信息
+    datasetQuery = Dataset.objects(id=int(datasetID)).first()
+    if datasetQuery and username == datasetQuery.username:
+        datasetQuery.taskName = taskName
+        datasetQuery.desc = desc
+        datasetQuery.save()
+
+    return {'code': RET.OK}
+
+
+# 某个数据集删除
+@api.route('/dataset/datasets/ID', methods=['DELETE'])
 @jwt_required
 def datasetDelete():
     # 读取数据
@@ -144,45 +155,22 @@ def datasetDelete():
     return {'code': RET.OK}
 
 
-# 任务信息修改
-@api.route('dataset/dataset/ID/info', methods=['PATCH'])
+# 部分数据集信息获取
+@api.route('/dataset/datasets/IDs/info', methods=['GET'])
 @jwt_required
-def taskinfoVerity():
-    # 读取数据集信息
-    info = request.json
-    datasetID = info.get('datasetid')
-    taskName = info.get('taskName')
-    desc = info.get('desc')
-    username = get_jwt_identity()
-
-    # 修改任务信息
-    datasetQuery = Dataset.objects(id=int(datasetID)).first()
-    if datasetQuery and username == datasetQuery.username:
-        datasetQuery.taskName = taskName
-        datasetQuery.desc = desc
-        datasetQuery.save()
-
-    return {'code': RET.OK}
-
-
-# 任务类型获取
-@api.route('/dataset/dataset/ID/tasktype', methods=['GET'])
-@jwt_required
-def tasktypeFetch():
+def datasetIDListFetch():
     # 读取基本数据
     info = request.values
-    datasetID = int(info.get('datasetid'))
     username = get_jwt_identity()
+    datasetType = info.get('datasetType')
 
-    # 查找数据集
-    datasetQuery = Dataset.objects(id=int(datasetID)).first()
-    if datasetQuery and username == datasetQuery.username:
-        taskType = datasetQuery.taskType
-    return {'code': RET.OK, 'data': {'taskType': taskType}}
+    queryList = ['id', 'taskName']
+    datasetQuery = Dataset.objects(Q(username=username) & Q(datasetType=datasetType)).scalar(*queryList)
+    return {'code': RET.OK, 'data': {'items': datasetQuery}}
 
 
-# 按group获取vector
-@api.route('/dataset/dataset/ID/group', methods=['GET'])
+# 某个数据集某个group的vectors
+@api.route('/dataset/datasets/ID/group/vectors', methods=['GET'])
 @jwt_required
 def groupVectorsFetch():
     # 读取基本数据

@@ -26,6 +26,6 @@ class PreProcessUtil():
         for item in list:
             word = item if list_type == '分词' else item['word']
             if word not in stopwords:
-                if word != '\t':
+                if word != '\t' and word.strip() !='':
                     out_list.append(item)
         return out_list

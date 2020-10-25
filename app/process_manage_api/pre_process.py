@@ -1,16 +1,13 @@
+import copy
 from flask import request, current_app
 from flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
-from mongoengine import Q
-import json
 
-from manage import celery
 from . import api
-from app.utils.response_code import RET
-from app import models, files
+from manage import celery
 from app.models.dataset import *
 from app.models.operator import *
-from app.utils.vectors_uitls import *
 from app.nlp import preprocess
+from app.utils.response_code import RET
 from app.utils.code_run_utils import codeRunUtil
 
 # 预处理类型与文本列数对应表
@@ -24,8 +21,8 @@ preprocessTypeMap = {
 }
 
 
-# 预处理状态获取
-@api.route('/pre-process/preprocess', methods=['GET'])
+# 某个数据集预处理列表获取
+@api.route('/pre-process/datasets/ID/preprocesses', methods=['GET'])
 @jwt_required
 def preprocessStatusFetch():
     # 读取数据
@@ -40,8 +37,8 @@ def preprocessStatusFetch():
     return {'code': RET.OK, 'data': {'items': datasetQuery.preprocessStatus}}
 
 
-# 新增预处理步骤
-@api.route('/pre-process/preprocess/id', methods=['POST'])
+# 某个数据集新增预处理步骤
+@api.route('/pre-process/datasets/ID/preprocesses', methods=['POST'])
 @jwt_required
 def preprocessAdd():
     # 读取数据
@@ -63,8 +60,8 @@ def preprocessAdd():
     return {'code':RET.OK}
 
 
-# 预处理结果数据获取
-@api.route('/pre-process/preprocess/ID/data', methods=['GET'])
+# 某个数据集某个预处理结果查看
+@api.route('/pre-process/datasets/ID/preprocesses/ID/data', methods=['GET'])
 @jwt_required
 def preprocessDataFetch():
     # 读取数据
@@ -82,12 +79,12 @@ def preprocessDataFetch():
     # 读取数据库
     datasetQuery = PreprocessDataset.objects(id=int(datasetID)).first()
     if datasetQuery and username == datasetQuery.username:
-        vectors = getVectorsFromPreprocessDataset(datasetQuery, preprocessID)
-    return {'code':RET.OK,'data':{'items': vectors[front:end], 'total': len(vectors)}}
+        data = getDataFromPreprocessDataset(datasetQuery, preprocessID)
+    return {'code':RET.OK,'data':{'items': data['vectors'][front:end], 'total': len(data['vectors'])}}
 
 
-# 执行预处理步骤
-@api.route('/pre-process/preprocess/id', methods=['PUT'])
+# 某个数据集执行某个预处理步骤
+@api.route('/pre-process/datasets/ID/preprocesses/ID/status', methods=['PUT'])
 @jwt_required
 def preprocessDeal():
     # 读取数据
@@ -119,13 +116,13 @@ def preprocessManage(dataset, preprocessIndex):
     textType = preprocessTypeMap[dataset.taskType]
 
     # 控制函数调用
-    previousVectors = getVectorsFromPreprocessDataset(dataset, previousProcessIndex)
+    previousData = getDataFromPreprocessDataset(dataset, previousProcessIndex)
     if preprocessType=='自定义算子':
         code=Operator.objects(operatorName=preprocessName).first().code
         curVectors=codeRunUtil(code,dataset.id)
     else:
-        curVectors = preprocessDistribute(previousVectors, preprocessName, params, textType, preprocessType,sparkSupport)
-    setVectorsToPreprocessDataset(dataset, preprocessIndex, curVectors)
+        curData = preprocessDistribute(previousData, preprocessName, params, textType, preprocessType,sparkSupport)
+    setDataToPreprocessDataset(dataset, preprocessIndex, preprocessName,preprocessType,curData)
 
     # 数据库状态更改
     dataset.preprocessStatus[preprocessIndex]['preprocessStatus'] = '已完成'
@@ -133,27 +130,53 @@ def preprocessManage(dataset, preprocessIndex):
     return '预处理成功'
 
 
+
 # 预处理函数分发
-def preprocessDistribute(vectors, preprocessName, params, textType, preprocessType,sparkSupport):
+def preprocessDistribute(data, preprocessName, params, textType, preprocessType,sparkSupport):
 
     # 分发至nlp预处理函数
     if sparkSupport:
         if preprocessName == '分词':
-            curVectors = preprocess.base_methods.cut_spark(vectors, {'tool': 'jieba'}, textType,'local[4]')
+            curData = preprocess.base_methods.cut_spark(data, params, textType,'local[4]')
         elif preprocessName =='词性标注':
-            curVectors = preprocess.base_methods.postagging_spark(vectors, {'tool': 'jieba'}, textType,'local[4]')
+            curData = preprocess.base_methods.postagging_spark(data, params, textType,'local[4]')
         elif preprocessName=='去停用词':
             stopwordsList = [line.strip() for line in open(r'e:/hit_stopwords.txt', encoding='UTF-8').readlines()]
-            curVectors = preprocess.base_methods.stopwords_spark(vectors, {'tool':stopwordsList,'from': '分词'}, textType,'local[4]')
+            curData = preprocess.base_methods.stopwords_spark(data, {'tool':stopwordsList,'from': '分词'}, textType,'local[4]')
 
     else:
         if preprocessName == '分词':
-            curVectors = preprocess.base_methods.cut(vectors,{'tool':'jieba'},textType)
+            curData = preprocess.base_methods.cut(data,params,textType)
         elif preprocessName == '词性标注':
-            curVectors = preprocess.base_methods.postagging(vectors, {'tool': 'jieba'}, textType)
+            curData = preprocess.base_methods.postagging(data, params, textType)
         elif preprocessName == '去停用词':
             stopwordsList = [line.strip() for line in open(r'e:/hit_stopwords.txt', encoding='UTF-8').readlines()]
-            curVectors = preprocess.base_methods.stopwords(vectors, {'tool': stopwordsList, 'from': '分词'},
+            curData = preprocess.base_methods.stopwords(data, {'tool': stopwordsList, 'from': '分词'},
                                                                  textType)
+        elif preprocessName =='Word2vec':
+            curData = preprocess.vector_models.Word2vec(data,params,textType)
+        elif preprocessName == 'EmbeddingMatrix':
+            curData=preprocess.features_construction.EmbeddingMatrix(data,params,textType)
 
-    return curVectors
+    return curData
+
+
+# 从数据库中读取向量
+def getDataFromPreprocessDataset(dataset, preprocessIndex):
+
+    # 读取数据
+    dataQuery = dataset.data.filter(id=preprocessIndex).first()
+    data=dataQuery.data
+
+    # 复制原数据
+    newData=copy.deepcopy(data)
+    return newData
+
+
+# 向量回填数据库
+def setDataToPreprocessDataset(dataset, preprocessIndex, preprocessName,preprocessType,data):
+    # 存入数据库
+    preprocessObj=PreprocessObject(id=preprocessIndex,preprocessName=preprocessName,preprocessType=preprocessType,data=data)
+    dataset.data.append(preprocessObj)
+    dataset.save()
+    return
