@@ -58,8 +58,8 @@ def csvReader(fileurl, encoding):
         i = 0
         vectors = []
         for vector in data:
-            vector['id'] = i
-            vector['delete'] = '未删除'
+            vector['vectorid'] = i
+            vector['deleted'] = '未删除'
             i = i + 1
             vectors.append(vector)
     return vectors
@@ -74,8 +74,8 @@ def tsvReader(fileurl, encoding):
         i = 0
         vectors = []
         for vector in data:
-            vector['id'] = i
-            vector['delete'] = '未删除'
+            vector['vectorid'] = i
+            vector['deleted'] = '未删除'
             i = i + 1
             vectors.append(vector)
     return vectors
@@ -96,8 +96,8 @@ def xlsReader(fileurl, encoding):
         for x in range(col_Num):
             vector[key[x]] = values[x]
         j += 1
-        vector["id"] = i
-        vector['delete'] = '未删除'
+        vector["vectorid"] = i
+        vector['deleted'] = '未删除'
         vectors.append(vector)
     return vectors
 
@@ -109,8 +109,8 @@ def jsonReader(fileurl, encoding):
         i = 0
         vectors = []
         for vector in data:
-            vector['id'] = i
-            vector['delete'] = '未删除'
+            vector['vectorid'] = i
+            vector['deleted'] = '未删除'
             i = i + 1
             vectors.append(vector)
     return vectors
@@ -124,8 +124,8 @@ def txtReader(fileurl, encoding):
         for i, content in enumerate(data):
             if not content.isspace() and len(content) > 0:
                 vector = {}
-                vector['delete'] = '未删除'
-                vector['id'] = i
+                vector['deleted'] = '未删除'
+                vector['vectorid'] = i
                 vector['text1'] = content
                 vectors.append(vector)
     return vectors
@@ -140,8 +140,8 @@ def docReader(fileurl, encoding):
         content = para.text
         if not content.isspace() and len(content) > 0:
             vector = {}
-            vector['delete'] = '未删除'
-            vector['id'] = i
+            vector['deleted'] = '未删除'
+            vector['vectorid'] = i
             vector['text1'] = content
             i = i + 1
             vectors.append(vector)

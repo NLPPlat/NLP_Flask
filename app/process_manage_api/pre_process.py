@@ -7,6 +7,7 @@ from manage import celery
 from app.models.dataset import *
 from app.models.operator import *
 from app.nlp import preprocess
+from app.utils.vector_uitls import *
 from app.utils.response_code import RET
 from app.utils.code_run_utils import codeRunUtil
 
@@ -45,7 +46,7 @@ def preprocessAdd():
     info = request.json
     datasetID = info.get('datasetid')
     preprocessAdd = info.get('preprocessAdd')
-    previousProcessID=int(info.get('previousProcessID'))
+    previousProcessID = int(info.get('previousProcessID'))
     sparkSupport = info.get('sparkSupport')
     preprocessParams = info.get('preprocessParams')
     username = get_jwt_identity()
@@ -54,33 +55,34 @@ def preprocessAdd():
     datasetQuery = PreprocessDataset.objects(id=int(datasetID)).first()
     if datasetQuery and username == datasetQuery.username:
         print(datasetQuery.preprocessStatus)
-        previousID=datasetQuery.preprocessStatus[-1]['id']
-        datasetQuery.preprocessStatus.append({'id':previousID+1,'preprocessName':preprocessAdd[1],'preprocessType':preprocessAdd[0],'previousProcessID':previousProcessID,'sparkSupport':sparkSupport,'preprocessStatus':'未开始','preprocessParams':preprocessParams})
+        previousID = datasetQuery.preprocessStatus[-1]['id']
+        datasetQuery.preprocessStatus.append(
+            {'id': previousID + 1, 'preprocessName': preprocessAdd[1], 'preprocessType': preprocessAdd[0],
+             'previousProcessID': previousProcessID, 'sparkSupport': sparkSupport, 'preprocessStatus': '未开始',
+             'preprocessParams': preprocessParams})
         datasetQuery.save()
-    return {'code':RET.OK}
+    return {'code': RET.OK}
 
 
-# 某个数据集某个预处理结果查看
+# 某个数据集某个预处理向量查看
 @api.route('/pre-process/datasets/ID/preprocesses/ID/data', methods=['GET'])
 @jwt_required
 def preprocessDataFetch():
     # 读取数据
     info = request.values
-    datasetID = info.get('datasetid')
-    preprocessID=int(info.get('preprocessid'))
+    datasetID = int(info.get('datasetid'))
+    preprocessID = int(info.get('preprocessid'))
     username = get_jwt_identity()
 
     # 分页
-    limit = int(request.args.get('limit'))
-    page = int(request.args.get('page'))
-    front = limit * (page - 1)
-    end = limit * page
+    limit = int(info.get('limit'))
+    page = int(info.get('page'))
 
     # 读取数据库
-    datasetQuery = PreprocessDataset.objects(id=int(datasetID)).first()
+    datasetQuery = PreprocessDataset.objects(id=datasetID).first()
     if datasetQuery and username == datasetQuery.username:
-        data = getDataFromPreprocessDataset(datasetQuery, preprocessID)
-    return {'code':RET.OK,'data':{'items': data['vectors'][front:end], 'total': len(data['vectors'])}}
+        count, vectors = vectors_select_divide_preprocess(datasetID, preprocessID, limit, page)
+    return {'code': RET.OK, 'data': {'items': vectors, 'total': count}}
 
 
 # 某个数据集执行某个预处理步骤
@@ -96,7 +98,7 @@ def preprocessDeal():
     # 数据库查询修改、异步处理任务
     datasetQuery = PreprocessDataset.objects(id=int(datasetID)).first()
     if datasetQuery and username == datasetQuery.username:
-        preprocessManage.delay(datasetQuery,preprocessIndex)
+        preprocessManage.delay(datasetQuery, preprocessIndex)
     return {'code': RET.OK}
 
 
@@ -117,12 +119,12 @@ def preprocessManage(dataset, preprocessIndex):
 
     # 控制函数调用
     previousData = getDataFromPreprocessDataset(dataset, previousProcessIndex)
-    if preprocessType=='自定义算子':
-        code=Operator.objects(operatorName=preprocessName).first().code
-        curVectors=codeRunUtil(code,dataset.id)
+    if preprocessType == '自定义算子':
+        code = Operator.objects(operatorName=preprocessName).first().code
+        curVectors = codeRunUtil(code, dataset.id)
     else:
-        curData = preprocessDistribute(previousData, preprocessName, params, textType, preprocessType,sparkSupport)
-    setDataToPreprocessDataset(dataset, preprocessIndex, preprocessName,preprocessType,curData)
+        curData = preprocessDistribute(previousData, preprocessName, params, textType, preprocessType, sparkSupport)
+    setDataToPreprocessDataset(dataset, preprocessIndex, preprocessName, preprocessType, curData)
 
     # 数据库状态更改
     dataset.preprocessStatus[preprocessIndex]['preprocessStatus'] = '已完成'
@@ -130,53 +132,58 @@ def preprocessManage(dataset, preprocessIndex):
     return '预处理成功'
 
 
-
 # 预处理函数分发
-def preprocessDistribute(data, preprocessName, params, textType, preprocessType,sparkSupport):
-
+def preprocessDistribute(data, preprocessName, params, textType, preprocessType, sparkSupport):
     # 分发至nlp预处理函数
     if sparkSupport:
         if preprocessName == '分词':
-            curData = preprocess.base_methods.cut_spark(data, params, textType,'local[4]')
-        elif preprocessName =='词性标注':
-            curData = preprocess.base_methods.postagging_spark(data, params, textType,'local[4]')
-        elif preprocessName=='去停用词':
+            curData = preprocess.base_methods.cut_spark(data, params, textType, 'local[4]')
+        elif preprocessName == '词性标注':
+            curData = preprocess.base_methods.postagging_spark(data, params, textType, 'local[4]')
+        elif preprocessName == '去停用词':
             stopwordsList = [line.strip() for line in open(r'e:/hit_stopwords.txt', encoding='UTF-8').readlines()]
-            curData = preprocess.base_methods.stopwords_spark(data, {'tool':stopwordsList,'from': '分词'}, textType,'local[4]')
+            curData = preprocess.base_methods.stopwords_spark(data, {'tool': stopwordsList, 'from': '分词'}, textType,
+                                                              'local[4]')
 
     else:
         if preprocessName == '分词':
-            curData = preprocess.base_methods.cut(data,params,textType)
+            curData = preprocess.base_methods.cut(data, params, textType)
         elif preprocessName == '词性标注':
             curData = preprocess.base_methods.postagging(data, params, textType)
         elif preprocessName == '去停用词':
             stopwordsList = [line.strip() for line in open(r'e:/hit_stopwords.txt', encoding='UTF-8').readlines()]
             curData = preprocess.base_methods.stopwords(data, {'tool': stopwordsList, 'from': '分词'},
-                                                                 textType)
-        elif preprocessName =='Word2vec':
-            curData = preprocess.vector_models.Word2vec(data,params,textType)
+                                                        textType)
+        elif preprocessName == 'Word2vec':
+            curData = preprocess.vector_models.Word2vec(data, params, textType)
         elif preprocessName == 'EmbeddingMatrix':
-            curData=preprocess.features_construction.EmbeddingMatrix(data,params,textType)
+            curData = preprocess.features_construction.EmbeddingMatrix(data, params, textType)
+        elif preprocessName == '单标签':
+            curData = preprocess.label_encoder.single_label_encoder(data, params, textType)
 
     return curData
 
 
 # 从数据库中读取向量
 def getDataFromPreprocessDataset(dataset, preprocessIndex):
-
     # 读取数据
-    dataQuery = dataset.data.filter(id=preprocessIndex).first()
-    data=dataQuery.data
-
+    preprocessObj = dataset.data.filter(id=preprocessIndex).first().to_mongo().to_dict()
+    vectors = json.loads(vectors_select_all_preprocess(dataset.id, preprocessIndex).to_json())
     # 复制原数据
-    newData=copy.deepcopy(data)
+    newData = copy.deepcopy(preprocessObj)
+    newData['vectors'] = vectors
     return newData
 
 
 # 向量回填数据库
-def setDataToPreprocessDataset(dataset, preprocessIndex, preprocessName,preprocessType,data):
+def setDataToPreprocessDataset(dataset, preprocessIndex, preprocessName, preprocessType, data):
     # 存入数据库
-    preprocessObj=PreprocessObject(id=preprocessIndex,preprocessName=preprocessName,preprocessType=preprocessType,data=data)
+    preprocessObj = PreprocessObject(id=preprocessIndex, preprocessName=preprocessName, preprocessType=preprocessType,
+                                     matrix=data['matrix'], url=data['url'], label=data['label'],
+                                     label_name=data['label_name'])
+    for vector in data['vectors']:
+        vector['preprocessid'] = preprocessIndex
+    vectors_insert(data['vectors'], '预处理数据集')
     dataset.data.append(preprocessObj)
     dataset.save()
     return

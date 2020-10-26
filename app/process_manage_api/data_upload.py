@@ -6,6 +6,7 @@ from manage import celery, app
 from app.models.dataset import *
 from app.models.venation import *
 from app.utils.file_utils import *
+from app.utils.vector_uitls import *
 
 
 # 训练数据集文件上传
@@ -27,6 +28,8 @@ def trainFileUpload():
                                       taskName=info.get('taskName'), datasetType='原始数据集',
                                       desc=info.get('desc'), publicity=info.get('publicity'), originalFile=fileurl,
                                       analyseStatus='解析中', annotationStatus='未开始')
+    if info.get('taskType') == '文本排序学习':
+        originalDataset.groupOn = 'on'
     datasetid = int(originalDataset.id)
     originalDataset.ancestor = datasetid
     originalDataset.save()
@@ -47,10 +50,13 @@ def trainFileUpload():
 # 训练数据集文件解析
 @celery.task
 def trainFileUploadAnalyse(fileurl, originalDataset):
-    files = fileReader(fileurl)
-    for text in files:
-        textContent = TextContent().from_json(json.dumps(text))
-        originalDataset.originalData.append(textContent)
+    datasetID = originalDataset.id
+    vectors = fileReader(fileurl)
+    for vector in vectors:
+        vector['datasetid'] = datasetID
+        if 'group' in vector:
+            vector['group']=int(vector['group'])
+    vectors_insert(vectors)
     originalDataset.analyseStatus = '解析完成'
     originalDataset.save()
-    return
+    return '解析完成'

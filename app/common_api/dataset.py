@@ -5,6 +5,7 @@ from mongoengine import Q
 from . import api
 from app.models.dataset import *
 from app.models.venation import *
+from app.utils.vector_uitls import *
 from app.utils.response_code import *
 from app.utils.dataset_utils import *
 from app.utils.file_utils import *
@@ -101,12 +102,12 @@ def datasetInfoFetch():
         datasetType = datasetQuery.datasetType
         if datasetType == '原始数据集':
             queryList = ['id', 'username', 'taskType', 'taskName', 'desc', 'publicity', 'datetime', 'analyseStatus',
-                         'annotationStatus', 'annotationPublicity']
+                         'annotationStatus', 'annotationPublicity','annotationFormat', 'groupOn']
         elif datasetType == '预处理数据集':
             queryList = ['id', 'username', 'taskType', 'taskName', 'desc', 'publicity', 'datetime']
         dataResult = {}
         for item in queryList:
-            dataResult[item]=datasetQuery[item]
+            dataResult[item] = datasetQuery[item]
     return {'code': RET.OK, 'data': dataResult}
 
 
@@ -155,6 +156,60 @@ def datasetDelete():
     return {'code': RET.OK}
 
 
+# 某个数据集向量获取
+@api.route('/dataset/datasets/ID/vectors', methods=['GET'])
+@jwt_required
+def datasetVectorsFetch():
+    # 读取基本数据
+    info = request.values
+    datasetid = int(info.get('datasetid'))
+    deleted = info.get('deleted')
+    limit = int(info.get('limit'))
+    page = int(info.get('page'))
+
+    # 数据库查询
+    count, vectors = vectors_select_divide_original(datasetid, deleted, limit, page)
+
+    return {'code': 200, 'data': {'items': vectors, 'total': count}}
+
+
+# 某个数据集某条向量获取
+@api.route('/dataset/datasets/ID/vector/ID', methods=['GET'])
+@jwt_required
+def datasetVectorFetch():
+    # 读取基本数据
+    info = request.values
+    datasetID = int(info.get("datasetid"))
+    vectorID = int(info.get('vectorid'))
+    username = get_jwt_identity()
+
+    # 数据查询
+    datasetQuery = OriginalDataset.objects(id=int(datasetID)).first()
+    if datasetQuery and username == datasetQuery.username:
+        vector = vectors_select_one(datasetID, vectorID)
+    return {'code': 200, 'data': {'vector': vector}}
+
+
+# 某个数据集某条向量更新
+@api.route('/dataset/datasets/ID/vectors/ID', methods=['PUT'])
+@jwt_required
+def editDataVector():
+    # 读取基本数据
+    info = request.values
+    datasetID = int(info.get("datasetid"))
+    vectorID = int(info.get('vectorid'))
+    vector = info.get('vector')
+    username = get_jwt_identity()
+
+    # 数据格式转换
+    vectorDict = json.loads(vector)
+    if 'edit' in vectorDict:
+        vectorDict.pop('edit')
+
+    # 数据库修改
+    vector_update(datasetID, vectorID, vectorDict)
+    return {'code': 200}
+
 # 部分数据集信息获取
 @api.route('/dataset/datasets/IDs/info', methods=['GET'])
 @jwt_required
@@ -176,11 +231,29 @@ def groupVectorsFetch():
     # 读取基本数据
     info = request.values
     datasetID = int(info.get('datasetid'))
-    group = info.get('group')
+    group = int(info.get('group'))
     username = get_jwt_identity()
 
     # 数据库查询
     datasetQuery = OriginalDataset.objects(id=int(datasetID)).first()
     if datasetQuery and username == datasetQuery.username:
-        vectorQuery = datasetQuery.originalData.filter(group=group)
-    return {'code': RET.OK, 'data': {'vectors': vectorQuery}}
+        count,vectors=vectors_select(datasetID,{'group':group,'deleted':'未删除'})
+    return {'code': RET.OK, 'data': {'vectors': vectors,'count':count}}
+
+# 某个数据集某个group的vectors更新
+@api.route('/dataset/datasets/ID/group/vectors', methods=['PUT'])
+@jwt_required
+def groupVectorsUpdate():
+    # 读取基本数据
+    info = request.json
+    datasetID = int(info.get('datasetid'))
+    group = info.get('group')
+    vectors=info.get('vectors')
+    username = get_jwt_identity()
+
+    # 数据库查询
+    datasetQuery = OriginalDataset.objects(id=int(datasetID)).first()
+    if datasetQuery and username == datasetQuery.username:
+        for vector in vectors:
+            vector_update(datasetID,vector['vectorid'],vector)
+    return {'code': RET.OK, 'data': {'vectors': vectors}}
