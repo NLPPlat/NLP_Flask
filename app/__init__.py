@@ -27,8 +27,10 @@ def create_app(config_name):
     from app import service_api
     from app import process_manage_api
     from app import data_manage_api
+
     app.register_blueprint(service_api.api, url_prefix='/service')
-    app.register_blueprint(process_manage_api.api,url_prefix='/process-manage')
-    app.register_blueprint(data_manage_api.api,url_prefix='/data-manage')
-    # return app
-    return app,jwt
+    app.register_blueprint(process_manage_api.api, url_prefix='/process-manage')
+    app.register_blueprint(data_manage_api.api, url_prefix='/data-manage')
+
+    return app
+    # return app,jwt
