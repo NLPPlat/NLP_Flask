@@ -56,12 +56,11 @@ class PreprocessObject(db.EmbeddedDocument):
     id = db.IntField()
     preprocessName = db.StringField()
     preprocessType = db.StringField()
-    matrix=db.StringField(default='')
-    url=db.StringField(default='')
+    matrix = db.StringField(default='')
+    url = db.StringField(default='')
     vectors = db.ListField(default=[])
-    label=db.DynamicField(default=[])
-    label_name=db.DynamicField(default={})
-
+    label = db.StringField(default='')
+    label_name = db.DynamicField(default=[])
 
 
 # 预处理数据集
@@ -71,3 +70,27 @@ class PreprocessDataset(Dataset):
          'preprocessStatus': '已完成'}])
     data = db.EmbeddedDocumentListField(PreprocessObject)
     annotationFormat = db.DynamicField()
+
+
+class FeaturesObject(db.EmbeddedDocument):
+    matrix = db.StringField(default='')
+    url = db.StringField(default='')
+    vectors = db.ListField(default=[])
+    label = db.StringField(default='')
+    label_name = db.DynamicField(default=[])
+
+# 特征数据集
+class FeaturesDataset(Dataset):
+    trainStatus=db.StringField(default='未开始')
+    features=db.EmbeddedDocumentField(FeaturesObject)
+    train=db.EmbeddedDocumentField(FeaturesObject)
+    test=db.EmbeddedDocumentField(FeaturesObject)
+    featuresShape=db.DynamicField()
+    trainShape=db.DynamicField()
+    testShape=db.DynamicField()
+    splitStatus=db.StringField(default='未完成')
+    splitStratify=db.StringField(default='None')
+    trainRate=db.DynamicField(default=0.8)
+    modelStatus=db.StringField(default='未完成')
+    model=db.DynamicField(default='')
+

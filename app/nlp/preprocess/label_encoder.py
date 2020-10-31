@@ -1,4 +1,8 @@
+import numpy as np
 from sklearn import preprocessing
+
+from manage import app
+from app.utils.file_utils import *
 
 
 def single_label_encoder(data, params, type):
@@ -11,12 +15,11 @@ def single_label_encoder(data, params, type):
     encoder = preprocessing.LabelEncoder()
     encoder.fit(label)
     label = encoder.transform(label)
-    # 构造映射
+    # 获得标签排序
     target_name = encoder.classes_
-    target = encoder.transform(target_name)
-    for index in range(len(target)):
-        label_name[target[index]] = target_name[index]
     # 存储
-    data['label'] = label
-    data['label_name'] = label_name
+    npyURL = getFileURL('label.npy', app)
+    np.save(npyURL, label)
+    data['label'] = npyURL
+    data['label_name'] = target_name.tolist()
     return data

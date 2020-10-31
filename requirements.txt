@@ -12,10 +12,12 @@ xlrd==1.2.0
 python_docx==0.8.10
 pyspark==3.0.1
 tensorflow==2.1.0
+tensorflow-hub==0.9.0
 scikit_learn==0.23.2
 gensim==3.8.3
 pandas==1.1.3
 jieba==0.42.1
+matplotlib==3.3.2
 
 # 以下仅windows需安装
 # eventlet==0.26.0

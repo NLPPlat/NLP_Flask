@@ -1,15 +1,15 @@
-import copy
-from flask import request, current_app
-from flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
+from flask import request
+from flask_jwt_extended import jwt_required, get_jwt_identity
 
 from . import api
 from manage import celery
+from app.nlp import preprocess
 from app.models.dataset import *
 from app.models.operator import *
-from app.nlp import preprocess
 from app.utils.vector_uitls import *
-from app.utils.response_code import RET
-from app.utils.code_run_utils import codeRunUtil
+from app.utils.response_code import *
+from app.utils.codehub_utils import *
+from app.utils.preprocess_uitls import *
 
 # 预处理类型与文本列数对应表
 preprocessTypeMap = {
@@ -54,7 +54,6 @@ def preprocessAdd():
     # 数据库查询并修改
     datasetQuery = PreprocessDataset.objects(id=int(datasetID)).first()
     if datasetQuery and username == datasetQuery.username:
-        print(datasetQuery.preprocessStatus)
         previousID = datasetQuery.preprocessStatus[-1]['id']
         datasetQuery.preprocessStatus.append(
             {'id': previousID + 1, 'preprocessName': preprocessAdd[1], 'preprocessType': preprocessAdd[0],
@@ -121,7 +120,7 @@ def preprocessManage(dataset, preprocessIndex):
     previousData = getDataFromPreprocessDataset(dataset, previousProcessIndex)
     if preprocessType == '自定义算子':
         code = Operator.objects(operatorName=preprocessName).first().code
-        curVectors = codeRunUtil(code, dataset.id)
+        curVectors = operatorRunUtil(code, dataset.id)
     else:
         curData = preprocessDistribute(previousData, preprocessName, params, textType, preprocessType, sparkSupport)
     setDataToPreprocessDataset(dataset, preprocessIndex, preprocessName, preprocessType, curData)
@@ -163,27 +162,3 @@ def preprocessDistribute(data, preprocessName, params, textType, preprocessType,
 
     return curData
 
-
-# 从数据库中读取向量
-def getDataFromPreprocessDataset(dataset, preprocessIndex):
-    # 读取数据
-    preprocessObj = dataset.data.filter(id=preprocessIndex).first().to_mongo().to_dict()
-    vectors = json.loads(vectors_select_all_preprocess(dataset.id, preprocessIndex).to_json())
-    # 复制原数据
-    newData = copy.deepcopy(preprocessObj)
-    newData['vectors'] = vectors
-    return newData
-
-
-# 向量回填数据库
-def setDataToPreprocessDataset(dataset, preprocessIndex, preprocessName, preprocessType, data):
-    # 存入数据库
-    preprocessObj = PreprocessObject(id=preprocessIndex, preprocessName=preprocessName, preprocessType=preprocessType,
-                                     matrix=data['matrix'], url=data['url'], label=data['label'],
-                                     label_name=data['label_name'])
-    for vector in data['vectors']:
-        vector['preprocessid'] = preprocessIndex
-    vectors_insert(data['vectors'], '预处理数据集')
-    dataset.data.append(preprocessObj)
-    dataset.save()
-    return

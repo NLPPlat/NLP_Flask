@@ -31,7 +31,6 @@ def EmbeddingMatrix(data, params, type):
             sentences.append(vector['text1'])
 
     # 处理为三维矩阵
-    print(data['url'])
     model = gensim.models.KeyedVectors.load_word2vec_format(data['url'])
     vocab_list = list(model.wv.vocab.keys())
     word_index = {word: index for index, word in enumerate(vocab_list)}

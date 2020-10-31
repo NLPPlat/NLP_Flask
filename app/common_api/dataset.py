@@ -37,6 +37,9 @@ def datasetListFetch():
                      'annotationStatus', 'annotationPublicity']
     elif datasetType == '预处理数据集':
         queryList = ['id', 'username', 'taskType', 'taskName', 'desc', 'publicity', 'datetime']
+    elif datasetType == '特征数据集':
+        trainStatusFilter = info.getlist('trainStatus[]')
+        queryList = ['id', 'username', 'taskType', 'taskName', 'desc', 'publicity', 'datetime', 'trainStatus']
 
     # 设置查询条件Q
     q = Q(taskType__in=taskTypeFilter)
@@ -54,12 +57,16 @@ def datasetListFetch():
         q = q & Q(annotationStatus__in=annotationStatusFilter)
     elif datasetType == '预处理数据集':
         pass
+    elif datasetType == '特征数据集':
+        q = q & Q(trainStatus__in=trainStatusFilter)
 
     # 数据库查询
     if datasetType == '原始数据集' or datasetType == '标注数据集':
         datasetList = OriginalDataset.objects(q).scalar(*queryList).order_by(sort)
     elif datasetType == '预处理数据集':
         datasetList = PreprocessDataset.objects(q).scalar(*queryList).order_by(sort)
+    elif datasetType == '特征数据集':
+        datasetList = FeaturesDataset.objects(q).scalar(*queryList).order_by(sort)
 
     # 分页
     front = limit * (page - 1)
@@ -78,12 +85,14 @@ def datasetCopy():
     datasetInitID = info.get('datasetInitid')
     copyDes = info.get('copyDes')
     username = get_jwt_identity()
+    params = {}
+    if 'params' in info:
+        params = info.get('params')
     # 读取原数据集
-    if datasetInitType == '原始数据集':
-        datasetInit = OriginalDataset.objects(id=int(datasetInitID)).first()
-        venationInit = Venation.objects(ancestor=int(datasetInitID)).first()
+    datasetInit = Dataset.objects(id=int(datasetInitID)).first()
+    venationInit = Venation.objects(ancestor=int(datasetInitID)).first()
     # 拷贝
-    datasetDesID = copy(datasetInit, datasetInitType, copyDes, username, venationInit)
+    datasetDesID = copy(datasetInit, datasetInitType, copyDes, username, venationInit, params)
     return {'code': RET.OK, 'data': {'datasetid': datasetDesID}}
 
 
@@ -102,9 +111,13 @@ def datasetInfoFetch():
         datasetType = datasetQuery.datasetType
         if datasetType == '原始数据集':
             queryList = ['id', 'username', 'taskType', 'taskName', 'desc', 'publicity', 'datetime', 'analyseStatus',
-                         'annotationStatus', 'annotationPublicity','annotationFormat', 'groupOn']
+                         'annotationStatus', 'annotationPublicity', 'annotationFormat', 'groupOn']
         elif datasetType == '预处理数据集':
             queryList = ['id', 'username', 'taskType', 'taskName', 'desc', 'publicity', 'datetime']
+        elif datasetType == '特征数据集':
+            queryList = ['id', 'username', 'taskType', 'taskName', 'desc', 'publicity', 'datetime', 'featuresShape',
+                         'trainShape', 'testShape', 'trainRate', 'splitStatus', 'splitStratify',
+                         'modelStatus', 'model']
         dataResult = {}
         for item in queryList:
             dataResult[item] = datasetQuery[item]
@@ -210,6 +223,7 @@ def editDataVector():
     vector_update(datasetID, vectorID, vectorDict)
     return {'code': 200}
 
+
 # 部分数据集信息获取
 @api.route('/dataset/datasets/IDs/info', methods=['GET'])
 @jwt_required
@@ -237,8 +251,9 @@ def groupVectorsFetch():
     # 数据库查询
     datasetQuery = OriginalDataset.objects(id=int(datasetID)).first()
     if datasetQuery and username == datasetQuery.username:
-        count,vectors=vectors_select(datasetID,{'group':group,'deleted':'未删除'})
-    return {'code': RET.OK, 'data': {'vectors': vectors,'count':count}}
+        count, vectors = vectors_select(datasetID, {'group': group, 'deleted': '未删除'})
+    return {'code': RET.OK, 'data': {'vectors': vectors, 'count': count}}
+
 
 # 某个数据集某个group的vectors更新
 @api.route('/dataset/datasets/ID/group/vectors', methods=['PUT'])
@@ -248,12 +263,12 @@ def groupVectorsUpdate():
     info = request.json
     datasetID = int(info.get('datasetid'))
     group = info.get('group')
-    vectors=info.get('vectors')
+    vectors = info.get('vectors')
     username = get_jwt_identity()
 
     # 数据库查询
     datasetQuery = OriginalDataset.objects(id=int(datasetID)).first()
     if datasetQuery and username == datasetQuery.username:
         for vector in vectors:
-            vector_update(datasetID,vector['vectorid'],vector)
+            vector_update(datasetID, vector['vectorid'], vector)
     return {'code': RET.OK, 'data': {'vectors': vectors}}
