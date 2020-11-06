@@ -35,8 +35,8 @@ def featuresSplit():
 
 
 def featuresUpdate(dataset):
-    x_train = np.load(dataset.train.matrix)
-    x_test = np.load(dataset.test.matrix)
+    x_train = np.load(dataset.train.feature)
+    x_test = np.load(dataset.test.feature)
     dataset.trainShape = x_train.shape
     dataset.testShape = x_test.shape
     return

@@ -7,6 +7,7 @@ from app.models.dataset import *
 from app.models.venation import *
 from app.utils.file_utils import *
 from app.utils.vector_uitls import *
+from app.utils.task_utils import *
 
 
 # 训练数据集文件上传
@@ -42,14 +43,16 @@ def trainFileUpload():
     venation.originalDataset.append(originalDatasetNode)
     venation.save()
 
+    # 创建任务
+    taskID=createTask('数据接入-'+originalDataset.taskName,'数据接入',originalDataset.id,originalDataset.taskName,username)
     # 解析文件
-    trainFileUploadAnalyse.delay(fileurl, originalDataset)
+    trainFileUploadAnalyse.delay(fileurl, originalDataset,taskID)
     return "success"
 
 
 # 训练数据集文件解析
 @celery.task
-def trainFileUploadAnalyse(fileurl, originalDataset):
+def trainFileUploadAnalyse(fileurl, originalDataset,taskID):
     datasetID = originalDataset.id
     vectors = fileReader(fileurl)
     for vector in vectors:
@@ -59,4 +62,5 @@ def trainFileUploadAnalyse(fileurl, originalDataset):
     vectors_insert(vectors)
     originalDataset.analyseStatus = '解析完成'
     originalDataset.save()
+    completeTask(taskID)
     return '解析完成'

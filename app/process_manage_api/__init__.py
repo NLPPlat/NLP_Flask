@@ -7,3 +7,4 @@ from . import data_set
 from . import annotation
 from . import pre_process
 from . import model_train
+from . import task_manage

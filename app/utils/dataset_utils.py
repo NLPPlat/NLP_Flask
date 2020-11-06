@@ -56,9 +56,9 @@ def copy(datasetInit, datasetInitType, copyDes, username, venationInit, params={
         for preprocess in datasetInit.data:
             if preprocess.id == int(params['preprocessid']):
                 features = FeaturesObject(label=preprocess.label, label_name=preprocess.label_name,
-                                          matrix=preprocess.matrix, vectors=preprocess.vectors, url=preprocess.url)
+                                          feature=preprocess.feature, vectors=preprocess.vectors, embedding=preprocess.embedding)
                 datasetDes.features = features
-                datasetDes.featuresShape = matrixShape(features.matrix)
+                datasetDes.featuresShape = matrixShape(features.feature)
                 break
         train=FeaturesObject(label_name=datasetDes.features.label_name)
         test=FeaturesObject(label_name=datasetDes.features.label_name)

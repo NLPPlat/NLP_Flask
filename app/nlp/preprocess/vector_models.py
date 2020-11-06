@@ -29,5 +29,5 @@ def Word2vec(data, params, type):
                         batch_words=int(params['batch_words']))
     modelURL=getFileURL('word2vec.txt', app)
     model.wv.save_word2vec_format(modelURL, binary=False)
-    data['url']=modelURL
+    data['embedding']=modelURL
     return data

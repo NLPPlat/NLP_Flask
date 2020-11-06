@@ -10,8 +10,8 @@ from app.utils.global_utils import *
 def getFeatures():
     data = {}
     datasetQuery = FeaturesDataset.objects(id=int(getDataset())).first()
-    trainURL = datasetQuery.train.matrix
-    testURL = datasetQuery.test.matrix
+    trainURL = datasetQuery.train.feature
+    testURL = datasetQuery.test.feature
     trainLabel = datasetQuery.features.label
     testLabel = datasetQuery.test.label
     label_name = datasetQuery.features.label_name

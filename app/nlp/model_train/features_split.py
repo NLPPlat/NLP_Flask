@@ -6,7 +6,7 @@ from app.utils.file_utils import getFileURL
 
 
 def features_split(dataset, stratify, rate):
-    featuresURL = dataset.features.matrix
+    featuresURL = dataset.features.feature
     labelURL = dataset.features.label
     x = np.load(featuresURL)
     y = np.load(labelURL)
@@ -16,8 +16,8 @@ def features_split(dataset, stratify, rate):
         x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=1 - rate, stratify=x)
     else:
         x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=1 - rate, stratify=y)
-    dataset.train.matrix = x_train_url = getFileURL('x_train.npy', app)
-    dataset.test.matrix = x_test_url = getFileURL('x_test.npy', app)
+    dataset.train.feature = x_train_url = getFileURL('x_train.npy', app)
+    dataset.test.feature = x_test_url = getFileURL('x_test.npy', app)
     dataset.train.label = y_train_url = getFileURL('y_train.npy', app)
     dataset.test.label = y_test_url = getFileURL('y_test.npy', app)
     np.save(x_train_url, x_train)

@@ -49,6 +49,7 @@ class OriginalDataset(Dataset):
 # 预处理向量
 class PreprocessVector(Vector):
     peprocessid: db.IntField()
+    meta = {'indexes': ['preprocessid']}
 
 
 # 预处理步骤对象
@@ -56,8 +57,8 @@ class PreprocessObject(db.EmbeddedDocument):
     id = db.IntField()
     preprocessName = db.StringField()
     preprocessType = db.StringField()
-    matrix = db.StringField(default='')
-    url = db.StringField(default='')
+    feature = db.StringField(default='')
+    embedding = db.StringField(default='')
     vectors = db.ListField(default=[])
     label = db.StringField(default='')
     label_name = db.DynamicField(default=[])
@@ -72,12 +73,13 @@ class PreprocessDataset(Dataset):
     annotationFormat = db.DynamicField()
 
 
+# 特征对象
 class FeaturesObject(db.EmbeddedDocument):
-    matrix = db.StringField(default='')
-    url = db.StringField(default='')
+    feature = db.StringField(default='')
+    embedding = db.StringField(default='')
     vectors = db.ListField(default=[])
     label = db.StringField(default='')
-    label_name = db.DynamicField(default=[])
+    label_name = db.DynamicField(default='')
 
 # 特征数据集
 class FeaturesDataset(Dataset):

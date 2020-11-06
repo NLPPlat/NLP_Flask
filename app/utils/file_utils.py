@@ -17,7 +17,7 @@ def fileDelete(paths):
 
 # 文件路径获取
 def getFileURL(filename, app):
-    UUIDFileName = str(uuid.uuid1()) + '_' + filename
+    UUIDFileName = str(uuid.uuid1()) + '___' + filename
     fileurl = os.path.join(app.config['UPLOAD_FOLDER'], UUIDFileName)
     return fileurl
 
@@ -49,6 +49,15 @@ def fileReader(fileurl):
     elif fileType == 'doc' or fileType == 'docx':
         vectors = docReader(fileurl, detector.result['encoding'])
     return vectors
+
+
+# 文件导出
+def downloadRUL(data, content):
+    if (content == 'vectors'):
+        pass
+    else:
+        return data[content]
+    return
 
 
 # 读取csv文件

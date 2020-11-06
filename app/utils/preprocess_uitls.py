@@ -1,5 +1,6 @@
 import copy
 import json
+import numpy as np
 
 from app.models.dataset import *
 from app.utils.vector_uitls import *
@@ -20,7 +21,7 @@ def getDataFromPreprocessDataset(dataset, preprocessIndex):
 def setDataToPreprocessDataset(dataset, preprocessIndex, preprocessName, preprocessType, data):
     # 存入数据库
     preprocessObj = PreprocessObject(id=preprocessIndex, preprocessName=preprocessName, preprocessType=preprocessType,
-                                     matrix=data['matrix'], url=data['url'], label=data['label'],
+                                     feature=data['feature'], embedding=data['embedding'], label=data['label'],
                                      label_name=data['label_name'])
     for vector in data['vectors']:
         vector['preprocessid'] = preprocessIndex
@@ -28,3 +29,19 @@ def setDataToPreprocessDataset(dataset, preprocessIndex, preprocessName, preproc
     dataset.data.append(preprocessObj)
     dataset.save()
     return
+
+
+# 返回前端的预处理数据
+def getDataForFront(dataset, preprocessID):
+    # 读取数据
+    preprocessObj = dataset.data.filter(id=preprocessID).first().to_mongo().to_dict()
+    if preprocessObj['label'] != '':
+        if preprocessObj['label'].split('.')[-1]=='npy':
+            label = np.load(preprocessObj['label'])
+            preprocessObj['label'] = label.shape
+        elif preprocessObj['label'].split('.')[-1]=='txt':
+            pass
+    if preprocessObj['feature'] != '':
+        feature = np.load(preprocessObj['feature'])
+        preprocessObj['feature'] = feature.shape
+    return preprocessObj

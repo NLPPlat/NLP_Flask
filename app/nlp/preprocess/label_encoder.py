@@ -23,3 +23,36 @@ def single_label_encoder(data, params, type):
     data['label'] = npyURL
     data['label_name'] = target_name.tolist()
     return data
+
+
+def BIO_label_encoder(data, params, type):
+    # 初始化
+    label = []
+    label_name = {}
+    # 转换
+    for vector in data['vectors']:
+        text = vector['text1']
+        bio_text = []
+        for char in text:
+            bio_char = [char, 'o']
+            bio_text.append(bio_char)
+        entities = vector['label']['entities']
+        for entityGroup in entities:
+            for entity in entities[entityGroup]:
+                start = int(entity['start'])
+                end = int(entity['end'])
+                bio_text[start][1] = 'B' + '-' + entityGroup
+                for i in range(start + 1, end):
+                    bio_text[i][1] = 'I' + '-' + entityGroup
+        label.append({'id': vector['vectorid'], 'label': bio_text})
+    # 写入
+    txtURL = getFileURL('BIOlabel.txt', app)
+    with open(txtURL, 'a',encoding='utf-8') as f:
+        for vector_label in label:
+            f.write(str(vector_label['id']))
+            f.write('\n')
+            for bio_vector in vector_label['label']:
+                f.write(bio_vector[0] + ' ' + bio_vector[1])
+                f.write('\n')
+    data['label'] = txtURL
+    return data

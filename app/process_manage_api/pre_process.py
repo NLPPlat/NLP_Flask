@@ -1,4 +1,4 @@
-from flask import request
+from flask import request, make_response, send_file
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
 from . import api
@@ -9,6 +9,7 @@ from app.models.operator import *
 from app.utils.vector_uitls import *
 from app.utils.response_code import *
 from app.utils.codehub_utils import *
+from app.utils.file_utils import *
 from app.utils.preprocess_uitls import *
 
 # 预处理类型与文本列数对应表
@@ -64,9 +65,9 @@ def preprocessAdd():
 
 
 # 某个数据集某个预处理向量查看
-@api.route('/pre-process/datasets/ID/preprocesses/ID/data', methods=['GET'])
+@api.route('/pre-process/datasets/ID/preprocesses/ID/vectors', methods=['GET'])
 @jwt_required
-def preprocessDataFetch():
+def preprocessVectorsFetch():
     # 读取数据
     info = request.values
     datasetID = int(info.get('datasetid'))
@@ -82,6 +83,45 @@ def preprocessDataFetch():
     if datasetQuery and username == datasetQuery.username:
         count, vectors = vectors_select_divide_preprocess(datasetID, preprocessID, limit, page)
     return {'code': RET.OK, 'data': {'items': vectors, 'total': count}}
+
+
+# 某个数据集某个预处理数据查看
+@api.route('/pre-process/datasets/ID/preprocesses/ID/data', methods=['GET'])
+@jwt_required
+def preprocessDataFetch():
+    # 读取数据
+    info = request.values
+    datasetID = int(info.get('datasetid'))
+    preprocessID = int(info.get('preprocessid'))
+    username = get_jwt_identity()
+
+    # 读取数据库
+    datasetQuery = PreprocessDataset.objects(id=datasetID).first()
+    if datasetQuery and username == datasetQuery.username:
+        preprocessObj = getDataForFront(datasetQuery, preprocessID)
+    return {'code': RET.OK, 'data': {'preprocessObj': preprocessObj}}
+
+
+# 某个数据集某个预处理数据导出
+@api.route('/pre-process/datasets/ID/preprocesses/ID/download', methods=['GET'])
+@jwt_required
+def preprocessDownload():
+    # 读取数据
+    info = request.values
+    datasetID = int(info.get('datasetid'))
+    preprocessID = int(info.get('preprocessid'))
+    content = info.get('content')
+    username = get_jwt_identity()
+
+    # 文件导出
+    datasetQuery = PreprocessDataset.objects(id=datasetID).first()
+    if datasetQuery and username == datasetQuery.username:
+        data = getDataFromPreprocessDataset(datasetQuery, preprocessID)
+        url = downloadRUL(data, content)
+        response = make_response(send_file(url))
+        response.headers['content-disposition'] = url.split('___')[-1]
+        response.headers['Access-Control-Expose-Headers'] = 'content-disposition'
+        return response
 
 
 # 某个数据集执行某个预处理步骤
@@ -159,6 +199,7 @@ def preprocessDistribute(data, preprocessName, params, textType, preprocessType,
             curData = preprocess.features_construction.EmbeddingMatrix(data, params, textType)
         elif preprocessName == '单标签':
             curData = preprocess.label_encoder.single_label_encoder(data, params, textType)
+        elif preprocessName == '序列BIO':
+            curData = preprocess.label_encoder.BIO_label_encoder(data, params, textType)
 
     return curData
-

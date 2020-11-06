@@ -31,7 +31,7 @@ def EmbeddingMatrix(data, params, type):
             sentences.append(vector['text1'])
 
     # 处理为三维矩阵
-    model = gensim.models.KeyedVectors.load_word2vec_format(data['url'])
+    model = gensim.models.KeyedVectors.load_word2vec_format(data['embedding'])
     vocab_list = list(model.wv.vocab.keys())
     word_index = {word: index for index, word in enumerate(vocab_list)}
     X_data = get_index(sentences, word_index)
@@ -53,7 +53,7 @@ def EmbeddingMatrix(data, params, type):
     featureMatrix = np.array(features)
 
     # 保存
-    npyURL = getFileURL('matrix.npy', app)
+    npyURL = getFileURL('feature.npy', app)
     np.save(npyURL, featureMatrix)
-    data['matrix'] = npyURL
+    data['feature'] = npyURL
     return data
