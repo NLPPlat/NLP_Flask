@@ -4,6 +4,7 @@ import csv
 import json
 import xlrd
 import docx
+import numpy as np
 from chardet.universaldetector import UniversalDetector
 
 

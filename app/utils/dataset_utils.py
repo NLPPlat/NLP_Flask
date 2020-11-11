@@ -1,12 +1,15 @@
 import json
 
+from manage import celery
 from app.models.dataset import *
 from app.models.venation import *
 from app.utils.vector_uitls import *
 from app.utils.common_utils import *
+from app.utils.preprocess_uitls import *
 
 
 # 数据集拷贝
+@celery.task
 def copy(datasetInit, datasetInitType, copyDes, username, venationInit, params={}):
     if datasetInitType == '原始数据集' and copyDes == '原始数据集':
         datasetDes = OriginalDataset(username=username, taskType=datasetInit.taskType,
@@ -56,15 +59,30 @@ def copy(datasetInit, datasetInitType, copyDes, username, venationInit, params={
         for preprocess in datasetInit.data:
             if preprocess.id == int(params['preprocessid']):
                 features = FeaturesObject(label=preprocess.label, label_name=preprocess.label_name,
-                                          feature=preprocess.feature, vectors=preprocess.vectors, embedding=preprocess.embedding)
+                                          feature=preprocess.feature, vectors=preprocess.vectors,
+                                          embedding=preprocess.embedding,
+                                          embedding_matrix=preprocess.embedding_matrix)
                 datasetDes.features = features
-                datasetDes.featuresShape = matrixShape(features.feature)
+                datasetDes.featuresShape = getFileShape(features.feature)
                 break
-        train=FeaturesObject(label_name=datasetDes.features.label_name)
-        test=FeaturesObject(label_name=datasetDes.features.label_name)
-        datasetDes.train=train
-        datasetDes.test=test
+        train = FeaturesObject(label_name=datasetDes.features.label_name)
+        test = FeaturesObject(label_name=datasetDes.features.label_name)
+        datasetDes.train = train
+        datasetDes.test = test
+
+    elif datasetInitType == '批处理数据集' and copyDes == '批处理特征集':
+        datasetDes = FeaturesBatchDataset(username=username, taskType=datasetInit.taskType,
+                                          taskName=datasetInit.taskName, datasetType='批处理特征集',
+                                          desc=datasetInit.desc, publicity=datasetInit.publicity, batchStatus='未开始')
+        vectors = json.loads(vectors_select_all_original(datasetInit.id).to_json())
+        for vector in vectors[:]:
+            if vector['deleted'] == '已删除':
+                vectors.remove(vector)
+        data = dealPipeline(vectors, int(params['pipeline']))
+        features = FeaturesBatchObject(label=data['label'], label_name=data['label_name'],
+                                       embedding_matrix=data['embedding_matrix'], embedding=data['embedding'],
+                                       feature=data['feature'])
+        datasetDes.features=features
     datasetDes.save()
     # venationInit.save()
-    return datasetDes.id
-
+    return '拷贝成功'

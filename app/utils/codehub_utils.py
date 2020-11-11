@@ -4,6 +4,8 @@ from app.utils.global_utils import *
 
 # 储存结果
 codehub_result = None
+# 储存模型
+codehub_model = None
 # 储存超参数列表
 codehub_params = None
 
@@ -15,8 +17,8 @@ codehub_result=operator.operator()
 
 codeForModel = '''
 trainmodel=TrainModel()
-global codehub_result
-codehub_result=trainmodel.train()
+global codehub_model
+codehub_model=trainmodel.train()
 '''
 
 codeForParams = '''
@@ -55,7 +57,7 @@ def operatorRunUtil(code, datasetIDForUse):
 
 
 # 模型执行
-def modelRunUtil(code, datasetIDForUse,trainedModelForUse):
+def modelRunUtil(code, datasetIDForUse, trainedModelForUse):
     setDataset(datasetIDForUse)
     setTrainedModel(trainedModelForUse)
     code = code + codeForModel
@@ -65,10 +67,11 @@ def modelRunUtil(code, datasetIDForUse,trainedModelForUse):
     try:
         exec(code, globals())
         sys.stdout = current
-        return codehub_result
+        return a._buff, codehub_model
     except Exception as e:
         sys.stdout = current
-        return traceback.format_exc()
+        return a._buff+traceback.format_exc(),codehub_model
+
 
 # 超参数读取
 def paramsFetchUtil(code):

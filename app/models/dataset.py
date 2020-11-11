@@ -46,6 +46,19 @@ class OriginalDataset(Dataset):
     annotationPublicity = db.StringField(default='不允许')
 
 
+# 原始数据集向量
+class OriginalBatchVector(Vector):
+    pass
+
+
+# 原始数据集
+class OriginalBatchDataset(Dataset):
+    originalFile = db.StringField(required=True)
+    originalFileSize = db.StringField()
+    originalData = db.ListField()
+    analyseStatus = db.StringField(required=True)
+
+
 # 预处理向量
 class PreprocessVector(Vector):
     peprocessid: db.IntField()
@@ -59,9 +72,10 @@ class PreprocessObject(db.EmbeddedDocument):
     preprocessType = db.StringField()
     feature = db.StringField(default='')
     embedding = db.StringField(default='')
+    embedding_matrix = db.StringField(default='')
     vectors = db.ListField(default=[])
     label = db.StringField(default='')
-    label_name = db.DynamicField(default=[])
+    label_name = db.DynamicField(default='')
 
 
 # 预处理数据集
@@ -77,22 +91,38 @@ class PreprocessDataset(Dataset):
 class FeaturesObject(db.EmbeddedDocument):
     feature = db.StringField(default='')
     embedding = db.StringField(default='')
+    embedding_matrix = db.StringField(default='')
     vectors = db.ListField(default=[])
     label = db.StringField(default='')
     label_name = db.DynamicField(default='')
 
+
 # 特征数据集
 class FeaturesDataset(Dataset):
-    trainStatus=db.StringField(default='未开始')
-    features=db.EmbeddedDocumentField(FeaturesObject)
-    train=db.EmbeddedDocumentField(FeaturesObject)
-    test=db.EmbeddedDocumentField(FeaturesObject)
-    featuresShape=db.DynamicField()
-    trainShape=db.DynamicField()
-    testShape=db.DynamicField()
-    splitStatus=db.StringField(default='未完成')
-    splitStratify=db.StringField(default='None')
-    trainRate=db.DynamicField(default=0.8)
-    modelStatus=db.StringField(default='未完成')
-    model=db.DynamicField(default='')
+    trainStatus = db.StringField(default='未开始')
+    features = db.EmbeddedDocumentField(FeaturesObject)
+    train = db.EmbeddedDocumentField(FeaturesObject)
+    test = db.EmbeddedDocumentField(FeaturesObject)
+    featuresShape = db.DynamicField()
+    trainShape = db.DynamicField(default='自定义')
+    testShape = db.DynamicField(default='自定义')
+    splitStatus = db.StringField(default='未完成')
+    splitStratify = db.StringField(default='None')
+    trainRate = db.DynamicField(default=0.8)
+    modelStatus = db.StringField(default='未完成')
+    model = db.DynamicField(default='')
 
+
+# 批处理特征对象
+class FeaturesBatchObject(db.EmbeddedDocument):
+    feature = db.StringField(default='')
+    embedding = db.StringField(default='')
+    embedding_matrix = db.StringField(default='')
+    vectors = db.ListField(default=[])
+    label = db.StringField(default='')
+    label_name = db.DynamicField(default='')
+
+# 批处理特征集
+class FeaturesBatchDataset(Dataset):
+    batchStatus = db.StringField(default='未开始')
+    features = db.EmbeddedDocumentField(FeaturesBatchObject)

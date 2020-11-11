@@ -35,7 +35,7 @@ def modelssFetch():
     else:
         q = q & (Q(username__ne=username) | Q(publicity='公开'))
     # 数据库查询
-    modelsList = Model.objects(q).order_by(sort)
+    modelsList = BaseModel.objects(q).order_by(sort)
     # 分页
     front = limit * (page - 1)
     end = limit * page
@@ -55,14 +55,14 @@ def modelUpload():
     username = get_jwt_identity()
 
     if (int(modelID) == -1):
-        model = Model(modelName=modelName, username=username,
+        model = BaseModel(modelName=modelName, username=username,
                       publicity=publicity, code=code)
         model.save()
     else:
-        operatorQuery = Operator.objects(id=int(modelID)).first()
-        if operatorQuery and username == operatorQuery.username:
-            operatorQuery.operatorName = modelName
-            operatorQuery.publicity = publicity
-            operatorQuery.code = code
-            operatorQuery.save()
+        modelQuery = BaseModel.objects(id=int(modelID)).first()
+        if modelQuery and username == modelQuery.username:
+            modelQuery.modelName = modelName
+            modelQuery.publicity = publicity
+            modelQuery.code = code
+            modelQuery.save()
     return {'code': RET.OK}

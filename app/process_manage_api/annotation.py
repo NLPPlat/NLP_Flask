@@ -61,22 +61,6 @@ def getDataVector():
 
 
 
-# 获取标注状态
-@api.route('annotation/status/ID', methods=['GET'])
-@jwt_required
-def fetchAnnotationStatus():
-    # 读取基本数据
-    info = request.values
-    datasetID = info.get("datasetid")
-    username = get_jwt_identity()
-
-    # 查询状态
-    datasetQuery = OriginalDataset.objects(id=int(datasetID)).first()
-    if datasetQuery and username == datasetQuery.username:
-        status = datasetQuery.annotationStatus
-    return {'code': RET.OK, 'data': {'annotationStatus': status}}
-
-
 # 更新标注状态
 @api.route('annotation/status/ID', methods=['POST'])
 @jwt_required

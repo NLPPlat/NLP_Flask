@@ -12,15 +12,7 @@ from app.utils.codehub_utils import *
 from app.utils.file_utils import *
 from app.utils.preprocess_uitls import *
 
-# 预处理类型与文本列数对应表
-preprocessTypeMap = {
-    '通用单文本分类': ['text1'],
-    '情感分析/意图识别': ['text1'],
-    '实体关系抽取': ['text1'],
-    '文本关系分析': ['text1', 'text2'],
-    '文本摘要': ['text1'],
-    '文本排序学习': ['text1']
-}
+
 
 
 # 某个数据集预处理列表获取
@@ -85,7 +77,7 @@ def preprocessVectorsFetch():
     return {'code': RET.OK, 'data': {'items': vectors, 'total': count}}
 
 
-# 某个数据集某个预处理数据查看
+# 某个数据集某个预处理步骤数据查看
 @api.route('/pre-process/datasets/ID/preprocesses/ID/data', methods=['GET'])
 @jwt_required
 def preprocessDataFetch():
@@ -154,15 +146,12 @@ def preprocessManage(dataset, preprocessIndex):
     preprocessType = dataset.preprocessStatus[preprocessIndex]['preprocessType']
     sparkSupport = dataset.preprocessStatus[preprocessIndex]['sparkSupport']
     params = dataset.preprocessStatus[preprocessIndex]['preprocessParams']
-    textType = preprocessTypeMap[dataset.taskType]
+    taskType = dataset.taskType
 
     # 控制函数调用
     previousData = getDataFromPreprocessDataset(dataset, previousProcessIndex)
-    if preprocessType == '自定义算子':
-        code = Operator.objects(operatorName=preprocessName).first().code
-        curVectors = operatorRunUtil(code, dataset.id)
-    else:
-        curData = preprocessDistribute(previousData, preprocessName, params, textType, preprocessType, sparkSupport)
+    curData = preprocess.preprocessManage(preprocessType, preprocessName, previousData, params, taskType, master=-1,
+                                          pipeline=-1)
     setDataToPreprocessDataset(dataset, preprocessIndex, preprocessName, preprocessType, curData)
 
     # 数据库状态更改
@@ -170,36 +159,3 @@ def preprocessManage(dataset, preprocessIndex):
     dataset.save()
     return '预处理成功'
 
-
-# 预处理函数分发
-def preprocessDistribute(data, preprocessName, params, textType, preprocessType, sparkSupport):
-    # 分发至nlp预处理函数
-    if sparkSupport:
-        if preprocessName == '分词':
-            curData = preprocess.base_methods.cut_spark(data, params, textType, 'local[4]')
-        elif preprocessName == '词性标注':
-            curData = preprocess.base_methods.postagging_spark(data, params, textType, 'local[4]')
-        elif preprocessName == '去停用词':
-            stopwordsList = [line.strip() for line in open(r'e:/hit_stopwords.txt', encoding='UTF-8').readlines()]
-            curData = preprocess.base_methods.stopwords_spark(data, {'tool': stopwordsList, 'from': '分词'}, textType,
-                                                              'local[4]')
-
-    else:
-        if preprocessName == '分词':
-            curData = preprocess.base_methods.cut(data, params, textType)
-        elif preprocessName == '词性标注':
-            curData = preprocess.base_methods.postagging(data, params, textType)
-        elif preprocessName == '去停用词':
-            stopwordsList = [line.strip() for line in open(r'e:/hit_stopwords.txt', encoding='UTF-8').readlines()]
-            curData = preprocess.base_methods.stopwords(data, {'tool': stopwordsList, 'from': '分词'},
-                                                        textType)
-        elif preprocessName == 'Word2vec':
-            curData = preprocess.vector_models.Word2vec(data, params, textType)
-        elif preprocessName == 'EmbeddingMatrix':
-            curData = preprocess.features_construction.EmbeddingMatrix(data, params, textType)
-        elif preprocessName == '单标签':
-            curData = preprocess.label_encoder.single_label_encoder(data, params, textType)
-        elif preprocessName == '序列BIO':
-            curData = preprocess.label_encoder.BIO_label_encoder(data, params, textType)
-
-    return curData

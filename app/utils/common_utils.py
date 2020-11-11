@@ -1,6 +1,7 @@
 import re
 import numpy as np
 
+
 # 分句
 def sentenceCut(para):
     para = re.sub('([。！？\?])([^”’])', r"\1\n\2", para)  # 单字符断句符
@@ -11,6 +12,21 @@ def sentenceCut(para):
     return para.split("\n")
 
 
-def matrixShape(matrixURL):
-    matrix=np.load(matrixURL)
+# 文件形状获取
+def getFileShape(fileurl):
+    if fileurl == '' or fileurl == []:
+        return ''
+    matrix = np.load(fileurl)
     return matrix.shape
+
+
+# 文件内容获取
+def getFileContent(fileurl):
+    if fileurl == '' or fileurl == []:
+        return ''
+    fileType = fileurl.split('.')[-1]
+    if (fileType == 'npy'):
+        data = np.load(fileurl)
+    else:
+        data = fileurl
+    return data

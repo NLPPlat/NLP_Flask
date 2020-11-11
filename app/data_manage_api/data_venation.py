@@ -5,7 +5,6 @@ import json
 
 from . import api
 from app.utils.response_code import RET
-from app.utils.dataset_utils import copy
 from app.utils.file_utils import fileDelete
 from app.models.dataset import *
 from app.models.venation import *

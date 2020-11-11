@@ -34,7 +34,7 @@ def BIO_label_encoder(data, params, type):
         text = vector['text1']
         bio_text = []
         for char in text:
-            bio_char = [char, 'o']
+            bio_char = [char, 'O']
             bio_text.append(bio_char)
         entities = vector['label']['entities']
         for entityGroup in entities:

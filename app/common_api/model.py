@@ -16,7 +16,7 @@ def modelsForUserFetch():
     username = get_jwt_identity()
 
     # 数据库查询
-    modelQuery = Model.objects(username=username)
+    modelQuery = BaseModel.objects(username=username)
     return {'code': RET.OK, 'data': {'items': modelQuery}}
 
 # 某个模型信息获取
@@ -29,7 +29,7 @@ def modelFetch():
     username = get_jwt_identity()
 
     # 数据库读取
-    modelQuery = Model.objects(id=int(modelID)).first()
+    modelQuery = BaseModel.objects(id=int(modelID)).first()
     if modelQuery and username == modelQuery.username:
         data = modelQuery
     return {'code': RET.OK, 'data': data}

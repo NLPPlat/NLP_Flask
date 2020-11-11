@@ -27,7 +27,7 @@ def datasetListFetch():
     usernameFilter = info.getlist('username[]')
     taskTypeFilter = info.getlist('taskType[]')
     sort = info.get('sort')
-    if datasetType == '原始数据集':
+    if datasetType == '原始数据集' or datasetType == '批处理数据集':
         analyseStatusFilter = info.getlist('analyseStatus[]')
         queryList = ['id', 'username', 'taskType', 'taskName', 'desc', 'publicity', 'datetime', 'analyseStatus',
                      'annotationStatus']
@@ -40,6 +40,9 @@ def datasetListFetch():
     elif datasetType == '特征数据集':
         trainStatusFilter = info.getlist('trainStatus[]')
         queryList = ['id', 'username', 'taskType', 'taskName', 'desc', 'publicity', 'datetime', 'trainStatus']
+    elif datasetType == '批处理特征集':
+        batchStatusFilter = info.getlist('batchStatus[]')
+        queryList = ['id', 'username', 'taskType', 'taskName', 'desc', 'publicity', 'datetime', 'batchStatus']
 
     # 设置查询条件Q
     q = Q(taskType__in=taskTypeFilter)
@@ -51,7 +54,7 @@ def datasetListFetch():
         q = q & Q(username=username)
     else:
         q = q & (Q(username__ne=username) | Q(publicity='公开'))
-    if datasetType == '原始数据集':
+    if datasetType == '原始数据集' or datasetType == '批处理数据集':
         q = q & Q(analyseStatus__in=analyseStatusFilter)
     elif datasetType == '标注数据集':
         q = q & Q(annotationStatus__in=annotationStatusFilter)
@@ -59,14 +62,20 @@ def datasetListFetch():
         pass
     elif datasetType == '特征数据集':
         q = q & Q(trainStatus__in=trainStatusFilter)
+    elif datasetType == '批处理特征集':
+        q = q & Q(batchStatus__in=batchStatusFilter)
 
     # 数据库查询
     if datasetType == '原始数据集' or datasetType == '标注数据集':
         datasetList = OriginalDataset.objects(q).scalar(*queryList).order_by(sort)
+    elif datasetType == '批处理数据集':
+        datasetList = OriginalBatchDataset.objects(q).scalar(*queryList).order_by(sort)
     elif datasetType == '预处理数据集':
         datasetList = PreprocessDataset.objects(q).scalar(*queryList).order_by(sort)
     elif datasetType == '特征数据集':
         datasetList = FeaturesDataset.objects(q).scalar(*queryList).order_by(sort)
+    elif datasetType == '批处理特征集':
+        datasetList = FeaturesBatchDataset.objects(q).scalar(*queryList).order_by(sort)
 
     # 分页
     front = limit * (page - 1)
@@ -92,8 +101,8 @@ def datasetCopy():
     datasetInit = Dataset.objects(id=int(datasetInitID)).first()
     venationInit = Venation.objects(ancestor=int(datasetInitID)).first()
     # 拷贝
-    datasetDesID = copy(datasetInit, datasetInitType, copyDes, username, venationInit, params)
-    return {'code': RET.OK, 'data': {'datasetid': datasetDesID}}
+    copy.delay(datasetInit, datasetInitType, copyDes, username, venationInit, params)
+    return {'code': RET.OK}
 
 
 # 某个数据集信息获取
@@ -110,8 +119,11 @@ def datasetInfoFetch():
     if datasetQuery and username == datasetQuery.username:
         datasetType = datasetQuery.datasetType
         if datasetType == '原始数据集':
-            queryList = ['id', 'username', 'taskType', 'taskName', 'desc', 'publicity', 'datetime', 'analyseStatus',
+            queryList = ['id', 'username', 'datasetType','taskType', 'taskName', 'desc', 'publicity', 'datetime', 'analyseStatus',
                          'annotationStatus', 'annotationPublicity', 'annotationFormat', 'groupOn']
+        elif datasetType == '批处理数据集':
+            queryList = ['id', 'username', 'datasetType','taskType', 'taskName', 'desc', 'publicity', 'datetime', 'analyseStatus',
+                         'groupOn']
         elif datasetType == '预处理数据集':
             queryList = ['id', 'username', 'taskType', 'taskName', 'desc', 'publicity', 'datetime']
         elif datasetType == '特征数据集':
@@ -175,14 +187,16 @@ def datasetDelete():
 def datasetVectorsFetch():
     # 读取基本数据
     info = request.values
-    datasetid = int(info.get('datasetid'))
+    datasetID = int(info.get('datasetid'))
     deleted = info.get('deleted')
     limit = int(info.get('limit'))
     page = int(info.get('page'))
+    username=get_jwt_identity()
 
     # 数据库查询
-    count, vectors = vectors_select_divide_original(datasetid, deleted, limit, page)
-
+    datasetQuery = Dataset.objects(id=int(datasetID)).first()
+    if datasetQuery and username == datasetQuery.username:
+        count, vectors = vectors_select_divide_original(datasetID, deleted, limit, page,datasetQuery.datasetType)
     return {'code': 200, 'data': {'items': vectors, 'total': count}}
 
 

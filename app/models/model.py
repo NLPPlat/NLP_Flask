@@ -3,7 +3,7 @@ from app import db
 
 
 # 模型
-class Model(db.Document):
+class BaseModel(db.Document):
     id = db.SequenceField(primary_key=True)
     modelName = db.StringField()
     modelType = db.StringField()
@@ -24,5 +24,7 @@ class TrainedModel(db.Document):
     code = db.StringField()
     model = db.StringField()
     type = db.StringField()
+    trainStatus = db.StringField(default='未开始')
     result = db.StringField()
-    figs=db.DictField(default={})
+    figs = db.DictField(default={})
+    evaluation = db.DictField(default={'accuracy': 0, 'precision': 0, 'recall': 0, 'f1': 0})

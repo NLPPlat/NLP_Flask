@@ -3,7 +3,11 @@ import json
 import numpy as np
 
 from app.models.dataset import *
+from app.models.pipeline import *
 from app.utils.vector_uitls import *
+from app.utils.common_utils import *
+
+from app.nlp.preprocess import *
 
 
 # 从数据库中读取向量
@@ -21,7 +25,8 @@ def getDataFromPreprocessDataset(dataset, preprocessIndex):
 def setDataToPreprocessDataset(dataset, preprocessIndex, preprocessName, preprocessType, data):
     # 存入数据库
     preprocessObj = PreprocessObject(id=preprocessIndex, preprocessName=preprocessName, preprocessType=preprocessType,
-                                     feature=data['feature'], embedding=data['embedding'], label=data['label'],
+                                     feature=data['feature'], embedding=data['embedding'],
+                                     embedding_matrix=data['embedding_matrix'], label=data['label'],
                                      label_name=data['label_name'])
     for vector in data['vectors']:
         vector['preprocessid'] = preprocessIndex
@@ -35,13 +40,18 @@ def setDataToPreprocessDataset(dataset, preprocessIndex, preprocessName, preproc
 def getDataForFront(dataset, preprocessID):
     # 读取数据
     preprocessObj = dataset.data.filter(id=preprocessID).first().to_mongo().to_dict()
-    if preprocessObj['label'] != '':
-        if preprocessObj['label'].split('.')[-1]=='npy':
-            label = np.load(preprocessObj['label'])
-            preprocessObj['label'] = label.shape
-        elif preprocessObj['label'].split('.')[-1]=='txt':
-            pass
-    if preprocessObj['feature'] != '':
-        feature = np.load(preprocessObj['feature'])
-        preprocessObj['feature'] = feature.shape
+    preprocessObj['label'] = getFileShape(preprocessObj['label'])
+    preprocessObj['feature'] = getFileShape(preprocessObj['feature'])
+    preprocessObj['embedding_matrix'] = getFileShape(preprocessObj['embedding_matrix'])
     return preprocessObj
+
+
+# 处理pipeline
+def dealPipeline(vectors, pipelineID):
+    pipeline = Pipeline.objects(id=pipelineID).first()
+    pipelines = pipeline.pipelines
+    data = {'vectors': vectors, 'label_name': '', 'label': '', 'embedding': '', 'embedding_matrix': '', 'feature': ''}
+    for preprocess in pipelines:
+        data = preprocessManage(preprocess.preprocessType, preprocess.preprocessName, data, preprocess.preprocessParams,
+                                pipeline.taskType, -1, -1, preprocess.pipeline)
+    return data
