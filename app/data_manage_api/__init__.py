@@ -7,3 +7,4 @@ from . import operator_manage
 from . import model_manage
 from . import resource_manage
 from . import pipeline_manage
+from . import trainedmodel_manage

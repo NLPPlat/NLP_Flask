@@ -14,6 +14,14 @@ def vectors_insert(vectors, datasetType='原始数据集'):
                 vector.pop('_id')
             vectorSave = OriginalVector.from_json(json.dumps(vector))
             vectorSave.save()
+    elif datasetType == '预处理数据集':
+        for vector in vectors:
+            if '_cls' in vector:
+                vector.pop('_cls')
+            if '_id' in vector:
+                vector.pop('_id')
+            vectorSave = PreprocessVector.from_json(json.dumps(vector))
+            vectorSave.save()
     elif datasetType == '批处理数据集':
         for vector in vectors:
             if '_cls' in vector:
@@ -22,13 +30,23 @@ def vectors_insert(vectors, datasetType='原始数据集'):
                 vector.pop('_id')
             vectorSave = OriginalBatchVector.from_json(json.dumps(vector))
             vectorSave.save()
-    elif datasetType == '预处理数据集':
+    elif datasetType == '批处理特征集':
         for vector in vectors:
             if '_cls' in vector:
                 vector.pop('_cls')
             if '_id' in vector:
                 vector.pop('_id')
-            vectorSave = PreprocessVector.from_json(json.dumps(vector))
+            if 'preprocessid' in vector:
+                vector.pop('preprocessid')
+            vectorSave = FeaturesBatchVector.from_json(json.dumps(vector))
+            vectorSave.save()
+    elif datasetType == '结果数据集':
+        for vector in vectors:
+            if '_cls' in vector:
+                vector.pop('_cls')
+            if '_id' in vector:
+                vector.pop('_id')
+            vectorSave = ResultBatchVector.from_json(json.dumps(vector))
             vectorSave.save()
     return
 
@@ -53,13 +71,15 @@ def vectors_select_one(datasetid, vectorid):
 
 
 # 某个原始数据集/批处理数据集批量向量获取(分页功能)
-def vectors_select_divide_original(datasetid, deleted, limit, page, datasetType='原始数据集'):
+def vectors_select_divide(datasetid, deleted, limit, page, datasetType='原始数据集'):
     front = limit * (page - 1)
     end = limit * page
     if datasetType == '原始数据集':
         vectors = OriginalVector.objects(Q(datasetid=datasetid) & Q(deleted=deleted))
     elif datasetType == '批处理数据集':
         vectors = OriginalBatchVector.objects(Q(datasetid=datasetid) & Q(deleted=deleted))
+    elif datasetType == '结果数据集':
+        vectors = ResultBatchVector.objects(Q(datasetid=datasetid))
     return vectors.count(), vectors[front:end]
 
 
@@ -72,7 +92,7 @@ def vectors_select_divide_preprocess(datasetid, preprocessid, limit, page):
 
 
 # 某个原始数据集全部向量获取
-def vectors_select_all_original(datasetid):
+def vectors_select_all(datasetid):
     vectors = Vector.objects(datasetid=datasetid)
     return vectors
 

@@ -43,7 +43,7 @@ def dataCut():
     # 数据库查询及修改
     datasetQuery = OriginalDataset.objects(id=datasetID).first()
     if datasetQuery and username == datasetQuery.username:
-        curVectors = dataCutService(vectors_select_all_original(datasetID))
+        curVectors = dataCutService(vectors_select_all(datasetID))
         vectors_delete_all(datasetID)
         vectors_insert(curVectors)
         datasetQuery.groupOn = 'on'

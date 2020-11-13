@@ -70,7 +70,7 @@ def modelRunUtil(code, datasetIDForUse, trainedModelForUse):
         return a._buff, codehub_model
     except Exception as e:
         sys.stdout = current
-        return a._buff+traceback.format_exc(),codehub_model
+        return a._buff + traceback.format_exc(), codehub_model
 
 
 # 超参数读取
@@ -86,3 +86,4 @@ def paramsFetchUtil(code):
     except Exception as e:
         sys.stdout = current
         return traceback.format_exc()
+

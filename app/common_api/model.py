@@ -19,6 +19,17 @@ def modelsForUserFetch():
     modelQuery = BaseModel.objects(username=username)
     return {'code': RET.OK, 'data': {'items': modelQuery}}
 
+# 某个人的训练模型列表获取
+@api.route('/model/trainedmodels', methods=['GET'])
+@jwt_required
+def trainedmodelsForUserFetch():
+    # 读取基本数据
+    username = get_jwt_identity()
+
+    # 数据库查询
+    modelQuery = TrainedModel.objects(username=username)
+    return {'code': RET.OK, 'data': {'items': modelQuery}}
+
 # 某个模型信息获取
 @api.route('/model/models/ID', methods=['GET'])
 @jwt_required

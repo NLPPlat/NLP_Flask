@@ -18,3 +18,11 @@ class Venation(db.Document):
     ancestor = db.IntField()
     originalDataset = db.EmbeddedDocumentListField(DatasetNode)
     preprocessDataset = db.EmbeddedDocumentListField(DatasetNode)
+
+# 数据节点
+class VenationNode(db.Document):
+    id = db.SequenceField(primary_key=True)
+    nodeid = db.IntField()
+    type = db.StringField()
+    parant = db.ListField(defalut=[])
+    children = db.ListField(default=[])

@@ -10,9 +10,9 @@ from app.utils.codehub_utils import *
 
 
 # 模型列表获取
-@api.route('/model/models', methods=['GET'])
+@api.route('/trainedmodel/trainedmodels', methods=['GET'])
 @jwt_required
-def modelsFetch():
+def trainedmodelsFetch():
     # 读取基本数据
     info = request.values
     limit = int(info.get('limit'))
@@ -35,36 +35,8 @@ def modelsFetch():
     else:
         q = q & (Q(username__ne=username) | Q(publicity='公开'))
     # 数据库查询
-    modelsList = BaseModel.objects(q).order_by(sort)
+    modelsList = TrainedModel.objects(q).order_by(sort)
     # 分页
     front = limit * (page - 1)
     end = limit * page
     return {'code': RET.OK, 'data': {'total': modelsList.count(), 'items': modelsList[front:end]}}
-
-
-# 模型保存
-@api.route('/model/models/ID', methods=['POST'])
-@jwt_required
-def modelUpload():
-    # 读取基本数据
-    info = request.json
-    code = info.get('code')
-    publicity = info.get('publicity')
-    modelID = info.get('modelid')
-    modelName = info.get('modelName')
-    plat = info.get('plat')
-    username = get_jwt_identity()
-
-    if (int(modelID) == -1):
-        model = BaseModel(modelName=modelName, username=username,
-                          publicity=publicity, code=code, plat=plat)
-        model.save()
-    else:
-        modelQuery = BaseModel.objects(id=int(modelID)).first()
-        if modelQuery and username == modelQuery.username:
-            modelQuery.modelName = modelName
-            modelQuery.publicity = publicity
-            modelQuery.code = code
-            modelQuery.plat = plat
-            modelQuery.save()
-    return {'code': RET.OK}

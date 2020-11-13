@@ -46,12 +46,12 @@ class OriginalDataset(Dataset):
     annotationPublicity = db.StringField(default='不允许')
 
 
-# 原始数据集向量
+# 批处理数据集向量
 class OriginalBatchVector(Vector):
     pass
 
 
-# 原始数据集
+# 批处理数据集
 class OriginalBatchDataset(Dataset):
     originalFile = db.StringField(required=True)
     originalFileSize = db.StringField()
@@ -87,6 +87,11 @@ class PreprocessDataset(Dataset):
     annotationFormat = db.DynamicField()
 
 
+# 特征数据集向量
+class FeaturesVector(Vector):
+    pass
+
+
 # 特征对象
 class FeaturesObject(db.EmbeddedDocument):
     feature = db.StringField(default='')
@@ -113,6 +118,13 @@ class FeaturesDataset(Dataset):
     model = db.DynamicField(default='')
 
 
+# 批处理特征集向量
+class FeaturesBatchVector(Vector):
+    originalText1=db.StringField()
+    originalText2=db.StringField()
+    pass
+
+
 # 批处理特征对象
 class FeaturesBatchObject(db.EmbeddedDocument):
     feature = db.StringField(default='')
@@ -122,7 +134,20 @@ class FeaturesBatchObject(db.EmbeddedDocument):
     label = db.StringField(default='')
     label_name = db.DynamicField(default='')
 
+
 # 批处理特征集
 class FeaturesBatchDataset(Dataset):
     batchStatus = db.StringField(default='未开始')
+    resultDataset = db.IntField(default=-1)
     features = db.EmbeddedDocumentField(FeaturesBatchObject)
+
+
+# 结果数据集向量
+class ResultBatchVector(Vector):
+    result = db.DynamicField()
+    pass
+
+
+# 结果数据集
+class ResultBatchDataset(Dataset):
+    vectors = db.ListField(default=[])

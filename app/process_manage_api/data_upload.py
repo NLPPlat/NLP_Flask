@@ -8,6 +8,7 @@ from app.models.venation import *
 from app.utils.file_utils import *
 from app.utils.vector_uitls import *
 from app.utils.task_utils import *
+from app.utils.venation_utils import *
 
 
 # 训练数据集文件上传
@@ -33,12 +34,13 @@ def trainFileUpload():
     originalDataset.ancestor = datasetid
     originalDataset.save()
     # 存入Venation数据库
-    originalDatasetNode = DatasetNode(parent=-1, id=datasetid, username=originalDataset.username,
-                                      taskName=originalDataset.taskName,
-                                      datetime=originalDataset.datetime, taskType=originalDataset.taskType)
-    venation = Venation(ancestor=datasetid)
-    venation.originalDataset.append(originalDatasetNode)
-    venation.save()
+    # originalDatasetNode = DatasetNode(parent=-1, id=datasetid, username=originalDataset.username,
+    #                                   taskName=originalDataset.taskName,
+    #                                   datetime=originalDataset.datetime, taskType=originalDataset.taskType)
+    # venation = Venation(ancestor=datasetid)
+    # venation.originalDataset.append(originalDatasetNode)
+    # venation.save()
+    createNode([], '训练数据集', datasetid)
     # 创建任务
     taskID = createTask('数据接入-' + originalDataset.taskName, '数据接入', originalDataset.id, originalDataset.taskName,
                         username)
@@ -76,14 +78,17 @@ def batchFileUpload():
     fileurl = getFileURL(filename, app)
     batchFile.save(fileurl)
     # 存入Dataset数据库
-    originalBatchDataset = OriginalBatchDataset(username=username, taskType=info.get('taskType'), taskName=info.get('taskName'),
-                                datasetType='批处理数据集', desc=info.get('desc'), publicity=info.get('publicity'),
-                                originalFile=fileurl, analyseStatus='解析中')
+    originalBatchDataset = OriginalBatchDataset(username=username, taskType=info.get('taskType'),
+                                                taskName=info.get('taskName'),
+                                                datasetType='批处理数据集', desc=info.get('desc'),
+                                                publicity=info.get('publicity'),
+                                                originalFile=fileurl, analyseStatus='解析中')
     if info.get('taskType') == '文本排序学习':
         originalBatchDataset.groupOn = 'on'
     originalBatchDataset.save()
     # 创建任务
-    taskID = createTask('数据接入-' + originalBatchDataset.taskName, '数据接入', originalBatchDataset.id, originalBatchDataset.taskName,
+    taskID = createTask('数据接入-' + originalBatchDataset.taskName, '数据接入', originalBatchDataset.id,
+                        originalBatchDataset.taskName,
                         username)
     # 解析文件
     batchFileUploadAnalyse.delay(fileurl, originalBatchDataset, taskID)
@@ -99,7 +104,7 @@ def batchFileUploadAnalyse(fileurl, originalBatchDataset, taskID):
         vector['datasetid'] = datasetID
         if 'group' in vector:
             vector['group'] = int(vector['group'])
-    vectors_insert(vectors,'批处理数据集')
+    vectors_insert(vectors, '批处理数据集')
     originalBatchDataset.analyseStatus = '解析完成'
     originalBatchDataset.save()
     completeTask(taskID)

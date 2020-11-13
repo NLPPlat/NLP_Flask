@@ -119,10 +119,12 @@ def datasetInfoFetch():
     if datasetQuery and username == datasetQuery.username:
         datasetType = datasetQuery.datasetType
         if datasetType == '原始数据集':
-            queryList = ['id', 'username', 'datasetType','taskType', 'taskName', 'desc', 'publicity', 'datetime', 'analyseStatus',
+            queryList = ['id', 'username', 'datasetType', 'taskType', 'taskName', 'desc', 'publicity', 'datetime',
+                         'analyseStatus',
                          'annotationStatus', 'annotationPublicity', 'annotationFormat', 'groupOn']
         elif datasetType == '批处理数据集':
-            queryList = ['id', 'username', 'datasetType','taskType', 'taskName', 'desc', 'publicity', 'datetime', 'analyseStatus',
+            queryList = ['id', 'username', 'datasetType', 'taskType', 'taskName', 'desc', 'publicity', 'datetime',
+                         'analyseStatus',
                          'groupOn']
         elif datasetType == '预处理数据集':
             queryList = ['id', 'username', 'taskType', 'taskName', 'desc', 'publicity', 'datetime']
@@ -130,6 +132,9 @@ def datasetInfoFetch():
             queryList = ['id', 'username', 'taskType', 'taskName', 'desc', 'publicity', 'datetime', 'featuresShape',
                          'trainShape', 'testShape', 'trainRate', 'splitStatus', 'splitStratify',
                          'modelStatus', 'model']
+        elif datasetType == '批处理特征集':
+            queryList = ['id', 'username', 'taskType', 'taskName', 'desc', 'publicity', 'datetime', 'batchStatus',
+                         'resultDataset']
         dataResult = {}
         for item in queryList:
             dataResult[item] = datasetQuery[item]
@@ -191,12 +196,12 @@ def datasetVectorsFetch():
     deleted = info.get('deleted')
     limit = int(info.get('limit'))
     page = int(info.get('page'))
-    username=get_jwt_identity()
+    username = get_jwt_identity()
 
     # 数据库查询
     datasetQuery = Dataset.objects(id=int(datasetID)).first()
     if datasetQuery and username == datasetQuery.username:
-        count, vectors = vectors_select_divide_original(datasetID, deleted, limit, page,datasetQuery.datasetType)
+        count, vectors = vectors_select_divide(datasetID, deleted, limit, page, datasetQuery.datasetType)
     return {'code': 200, 'data': {'items': vectors, 'total': count}}
 
 

@@ -4,7 +4,7 @@ from flask import request, current_app
 from flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
 
 from . import api
-from manage import celery,app
+from manage import celery, app
 from app.models.dataset import *
 from app.models.model import *
 from app.nlp.model_train import *
@@ -61,9 +61,10 @@ def modelUpdate():
 
     # 数据库查询
     datasetQuery = FeaturesDataset.objects(id=datasetID).first()
+    modelQuery = BaseModel.objects(id=modelSelect).first()
     if datasetQuery and datasetQuery.username == username:
         trainedModel = TrainedModel(username=username, baseModelID=modelSelect, modelName=modelName,
-                                    modelParams=paramsFetchUtil(code), code=code)
+                                    modelParams=paramsFetchUtil(code), code=code, plat=modelQuery.plat)
         trainedModel.save()
         datasetQuery.model = trainedModel.id
         datasetQuery.modelStatus = '已完成'
@@ -112,9 +113,9 @@ def trainedModelRun():
 # 异步训练模型
 @celery.task
 def trainedModelRuntask(trainedModelQuery, datasetID):
-    result,model = modelRunUtil(trainedModelQuery.code, datasetID, trainedModelQuery.id)
-    if model!=None:
-        modelURL=getFileURL('model.h5',app)
+    result, model = modelRunUtil(trainedModelQuery.code, datasetID, trainedModelQuery.id)
+    if model != None:
+        modelURL = getFileURL('model.h5', app)
         model.save(modelURL)
         trainedModelQuery.model = modelURL
     trainedModelQuery.result = result

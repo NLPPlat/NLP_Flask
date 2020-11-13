@@ -51,7 +51,13 @@ def dealPipeline(vectors, pipelineID):
     pipeline = Pipeline.objects(id=pipelineID).first()
     pipelines = pipeline.pipelines
     data = {'vectors': vectors, 'label_name': '', 'label': '', 'embedding': '', 'embedding_matrix': '', 'feature': ''}
+    for vector in data['vectors']:
+        if 'text1' in vector:
+            vector['originalText1'] = vector['text1']
+        if 'text2' in vector:
+            vector['originalText2'] = vector['text2']
     for preprocess in pipelines:
         data = preprocessManage(preprocess.preprocessType, preprocess.preprocessName, data, preprocess.preprocessParams,
                                 pipeline.taskType, -1, -1, preprocess.pipeline)
+
     return data
