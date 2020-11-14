@@ -12,6 +12,7 @@ from app.utils.vector_uitls import *
 from app.utils.response_code import *
 from app.utils.codehub_utils import *
 from app.utils.file_utils import *
+from app.utils.venation_utils import *
 
 
 # 某个训练模型代码运行
@@ -56,6 +57,10 @@ def batchRunManage(dataset, trainedmodel, operatorOn, operatorCode):
         resultID=result.id
         dataset.resultDataset = resultID
         dataset.save()
+    #     创建数据脉络
+        venationParent1ID = findNodeID('批处理特征集', dataset.id)
+        venationParent2ID = findNodeID('训练模型对象', trainedmodel.id)
+        createNode([venationParent1ID, venationParent2ID], '结果数据集', result.id)
     else:
         resultID=dataset.resultDataset
         vectors_delete_all(resultID)

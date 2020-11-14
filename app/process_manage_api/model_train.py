@@ -12,6 +12,7 @@ from app.utils.vector_uitls import *
 from app.utils.response_code import *
 from app.utils.codehub_utils import *
 from app.utils.file_utils import *
+from app.utils.venation_utils import *
 
 
 # 某个数据集特征修改
@@ -69,6 +70,9 @@ def modelUpdate():
         datasetQuery.model = trainedModel.id
         datasetQuery.modelStatus = '已完成'
         datasetQuery.save()
+    #     创建数据脉络
+        venationParent1ID = findNodeID('特征数据集', datasetID)
+        createNode([venationParent1ID], '训练模型对象', trainedModel.id)
     return {'code': RET.OK}
 
 

@@ -30,17 +30,8 @@ def trainFileUpload():
                                       analyseStatus='解析中', annotationStatus='未开始')
     if info.get('taskType') == '文本排序学习':
         originalDataset.groupOn = 'on'
-    datasetid = int(originalDataset.id)
-    originalDataset.ancestor = datasetid
     originalDataset.save()
-    # 存入Venation数据库
-    # originalDatasetNode = DatasetNode(parent=-1, id=datasetid, username=originalDataset.username,
-    #                                   taskName=originalDataset.taskName,
-    #                                   datetime=originalDataset.datetime, taskType=originalDataset.taskType)
-    # venation = Venation(ancestor=datasetid)
-    # venation.originalDataset.append(originalDatasetNode)
-    # venation.save()
-    createNode([], '训练数据集', datasetid)
+    createNode([], '训练数据集', originalDataset.id)
     # 创建任务
     taskID = createTask('数据接入-' + originalDataset.taskName, '数据接入', originalDataset.id, originalDataset.taskName,
                         username)
@@ -86,6 +77,7 @@ def batchFileUpload():
     if info.get('taskType') == '文本排序学习':
         originalBatchDataset.groupOn = 'on'
     originalBatchDataset.save()
+    createNode([], '批处理数据集', originalBatchDataset.id)
     # 创建任务
     taskID = createTask('数据接入-' + originalBatchDataset.taskName, '数据接入', originalBatchDataset.id,
                         originalBatchDataset.taskName,

@@ -6,6 +6,7 @@ from app.models.venation import *
 from app.utils.vector_uitls import *
 from app.utils.common_utils import *
 from app.utils.preprocess_uitls import *
+from app.utils.venation_utils import *
 
 
 # 数据集拷贝
@@ -24,11 +25,6 @@ def copy(datasetInit, datasetInitType, copyDes, username, venationInit, params={
         for vector in vectors:
             vector['datasetid'] = datasetDes.id
         vectors_insert(vectors)
-        # datasetNodeDes = DatasetNode(parent=-1, id=datasetDes.id, username=datasetDes.username,
-        #                              taskName=datasetDes.taskName, taskType=datasetDes.taskType,
-        #                              datetime=datasetDes.datetime)
-        # venationDes = Venation(ancestor=datasetDes.id, originalDataset=[datasetNodeDes])
-        # venationDes.save()
 
 
     elif datasetInitType == '原始数据集' and copyDes == '预处理数据集':
@@ -47,10 +43,9 @@ def copy(datasetInit, datasetInitType, copyDes, username, venationInit, params={
             vector['datasetid'] = datasetDes.id
             vector['preprocessid'] = 0
         vectors_insert(vectors, '预处理数据集')
-        # datasetNodeDes = DatasetNode(parent=datasetInit.id, id=datasetDes.id, username=datasetDes.username,
-        #                              taskName=datasetDes.taskName, taskType=datasetDes.taskType,
-        #                              datetime=datasetDes.datetime)
-        # venationInit.preprocessDataset.append(datasetNodeDes)
+        venationParentID = findNodeID('训练数据集', datasetInit.id)
+        createNode([venationParentID], '预处理数据集', datasetDes.id)
+
 
 
     elif datasetInitType == '预处理数据集' and copyDes == '特征数据集':
@@ -70,6 +65,8 @@ def copy(datasetInit, datasetInitType, copyDes, username, venationInit, params={
         test = FeaturesObject(label_name=datasetDes.features.label_name)
         datasetDes.train = train
         datasetDes.test = test
+        venationParentID = findNodeID('预处理数据集', datasetInit.id)
+        createNode([venationParentID], '特征数据集', datasetDes.id)
 
     elif datasetInitType == '批处理数据集' and copyDes == '批处理特征集':
         datasetDes = FeaturesBatchDataset(username=username, taskType=datasetInit.taskType,
@@ -86,7 +83,10 @@ def copy(datasetInit, datasetInitType, copyDes, username, venationInit, params={
                                        embedding_matrix=data['embedding_matrix'], embedding=data['embedding'],
                                        feature=data['feature'])
         vectors_insert(data['vectors'], '批处理特征集')
-        datasetDes.features=features
+        datasetDes.features = features
+        venationParent1ID = findNodeID('批处理数据集', datasetInit.id)
+        venationParent2ID = findNodeID('预处理管道对象', int(params['pipeline']))
+        createNode([venationParent1ID, venationParent2ID], '批处理特征集', datasetDes.id)
     datasetDes.save()
     # venationInit.save()
     return '拷贝成功'

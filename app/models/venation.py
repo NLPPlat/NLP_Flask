@@ -24,5 +24,5 @@ class VenationNode(db.Document):
     id = db.SequenceField(primary_key=True)
     nodeid = db.IntField()
     type = db.StringField()
-    parant = db.ListField(defalut=[])
+    parents = db.ListField(defalut=[])
     children = db.ListField(default=[])

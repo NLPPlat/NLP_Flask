@@ -2,17 +2,16 @@ from flask import request, make_response, send_file
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
 from . import api
-from manage import celery
+from manage import celery, app
 from app.nlp import preprocess
 from app.models.dataset import *
 from app.models.operator import *
+from app.models.resource import *
 from app.utils.vector_uitls import *
 from app.utils.response_code import *
 from app.utils.codehub_utils import *
 from app.utils.file_utils import *
 from app.utils.preprocess_uitls import *
-
-
 
 
 # 某个数据集预处理列表获取
@@ -94,6 +93,35 @@ def preprocessDataFetch():
     return {'code': RET.OK, 'data': {'preprocessObj': preprocessObj}}
 
 
+# 某个数据集某个预处理向量修改
+@api.route('/pre-process/datasets/ID/preprocesses/ID/data', methods=['POST'])
+@jwt_required
+def preprocessUpload():
+    # 读取基本数据
+    info = request.values
+    datasetID = int(info.get('datasetid'))
+    preprocessID = int(info.get('preprocessid'))
+    nature = info.get('nature')
+    resourceSelect = info.get('resourceSelect')
+    username = get_jwt_identity()
+
+    datasetQuery = PreprocessDataset.objects(id=datasetID).first()
+    preprocessObj = datasetQuery.data.filter(id=preprocessID).first()
+    if datasetQuery and username == datasetQuery.username:
+        if resourceSelect == '':
+            file = request.files['file']
+            filename = file.filename
+            fileurl = getFileURL(filename, app)
+            file.save(fileurl)
+            preprocessObj[nature] = fileurl
+            datasetQuery.save()
+        else:
+            resource = Resource.objects(id=int(resourceSelect)).first()
+            preprocessObj[nature] = resource.url
+            datasetQuery.save()
+    return {'code': RET.OK}
+
+
 # 某个数据集某个预处理数据导出
 @api.route('/pre-process/datasets/ID/preprocesses/ID/download', methods=['GET'])
 @jwt_required
@@ -158,4 +186,3 @@ def preprocessManage(dataset, preprocessIndex):
     dataset.preprocessStatus[preprocessIndex]['preprocessStatus'] = '已完成'
     dataset.save()
     return '预处理成功'
-

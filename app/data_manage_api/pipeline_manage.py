@@ -6,6 +6,7 @@ from . import api
 from app.models.dataset import *
 from app.models.pipeline import *
 from app.utils.response_code import *
+from app.utils.venation_utils import *
 
 
 # 管道列表获取
@@ -85,5 +86,8 @@ def pipelineConstruction():
             preprocessPreviousObj = preprocessObj
             pipeline.pipelines.append(pipelineObj)
         pipeline.save()
+        # 创建数据脉络节点
+        venationParentID = findNodeID('预处理数据集', datasetID)
+        createNode([venationParentID], '预处理管道对象', pipeline.id)
 
     return {'code': RET.OK}

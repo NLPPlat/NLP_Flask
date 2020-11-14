@@ -23,6 +23,7 @@ def getFileURL(filename, app):
     return fileurl
 
 
+
 # 文件读取
 def fileReader(fileurl):
     # 检测编码集
