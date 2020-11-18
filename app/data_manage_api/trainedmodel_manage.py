@@ -9,6 +9,7 @@ from app.models.model import *
 from app.utils.response_code import *
 from app.utils.codehub_utils import *
 from app.utils.file_utils import *
+from app.utils.time_utils import *
 
 
 # 模型列表获取
@@ -61,7 +62,7 @@ def trainedmodelUpload():
     # 存入Trainedmodel数据库
     trainedmodel = TrainedModel(username=username, plat=info.get('plat'),
                                modelName=info.get('trainedmodelName'), desc=info.get('desc'),
-                               publicity=info.get('publicity'), model=fileurl)
+                               publicity=info.get('publicity'), model=fileurl,datetime=getTime())
     trainedmodel.save()
     return "success"
 

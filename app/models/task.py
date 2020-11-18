@@ -10,4 +10,5 @@ class Task(db.Document):
     taskName = db.StringField()
     taskType = db.StringField()
     taskStatus = db.StringField()
-    datetime = db.DateTimeField(default=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+    datetime = db.DateTimeField()
+    endtime=db.DateTimeField()

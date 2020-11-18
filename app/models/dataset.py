@@ -1,5 +1,6 @@
 import datetime
 from app import db
+from app.utils.time_utils import *
 
 
 # 向量超类
@@ -25,7 +26,7 @@ class Dataset(db.DynamicDocument):
     ancestor = db.IntField()
     desc = db.StringField()
     publicity = db.StringField(required=True)
-    datetime = db.DateTimeField(default=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+    datetime = db.DateTimeField()
     groupOn = db.StringField(default='off')
     meta = {'allow_inheritance': True}
 
@@ -120,8 +121,8 @@ class FeaturesDataset(Dataset):
 
 # 批处理特征集向量
 class FeaturesBatchVector(Vector):
-    originalText1=db.StringField()
-    originalText2=db.StringField()
+    originalText1 = db.StringField()
+    originalText2 = db.StringField()
     pass
 
 
@@ -138,6 +139,8 @@ class FeaturesBatchObject(db.EmbeddedDocument):
 # 批处理特征集
 class FeaturesBatchDataset(Dataset):
     batchStatus = db.StringField(default='未开始')
+    begintime = db.DateTimeField()
+    endtime = db.DateTimeField()
     resultDataset = db.IntField(default=-1)
     features = db.EmbeddedDocumentField(FeaturesBatchObject)
 

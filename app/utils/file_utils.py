@@ -19,7 +19,8 @@ def fileDelete(paths):
 # 文件路径获取
 def getFileURL(filename, app):
     UUIDFileName = str(uuid.uuid1()) + '___' + filename
-    fileurl = os.path.join(app.config['UPLOAD_FOLDER'], UUIDFileName)
+    # fileurl = os.path.join(app.config['UPLOAD_FOLDER'], UUIDFileName)
+    fileurl =app.config['UPLOAD_FOLDER']+'/'+UUIDFileName
     return fileurl
 
 

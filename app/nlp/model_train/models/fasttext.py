@@ -9,36 +9,37 @@ from tensorflow import keras
 from app.dataAPI.model_train import *
 from app.dataAPI.utils import *
 import matplotlib.pyplot as plt
+from tensorflow.keras.preprocessing import sequence
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense,Dropout
+from tensorflow.keras.layers import Embedding
+from tensorflow.keras.callbacks import Callback,EarlyStopping
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.layers import GlobalAveragePooling1D
+from tensorflow.keras.datasets import imdb
 
 
 class TrainModel():
     # 构建TextCNN模型
     def TextCNN_model_2(self, x_train_padded_seqs, y_train, x_test_padded_seqs, y_test, embedding_matrix):
-        params=getParams()
         # 模型结构：词嵌入-卷积池化*3-拼接-全连接-dropout-全连接
         embedding_matrix_x, embedding_matrix_y = embedding_matrix.shape
         feature_x, feature_y = x_train_padded_seqs.shape
         main_input = Input(shape=(feature_y,), dtype='float64')
         # 词嵌入（使用预训练的词向量）
-        embedder = Embedding(embedding_matrix_x, embedding_matrix_y, input_length=feature_y, weights=[embedding_matrix],
-                             trainable=True)
-        embed = embedder(main_input)
-        # 词窗大小分别为3,4,5
-        cnn1 = Conv1D(embedding_matrix_y, 2, padding='same', strides=1, activation='relu')(embed)
-        cnn1 = MaxPooling1D(pool_size=15)(cnn1)
-        cnn2 = Conv1D(embedding_matrix_y, 3, padding='same', strides=1, activation='relu')(embed)
-        cnn2 = MaxPooling1D(pool_size=14)(cnn2)
-        cnn3 = Conv1D(embedding_matrix_y, 4, padding='same', strides=1, activation='relu')(embed)
-        cnn3 = MaxPooling1D(pool_size=13)(cnn3)
-        # 合并三个模型的输出向量
-        cnn = concatenate([cnn1, cnn2, cnn3], axis=-1)
-        flat = Flatten()(cnn)
-        drop = Dropout(0.2)(flat)
-        main_output = Dense(10, activation='softmax')(drop)
-        model = Model(inputs=main_input, outputs=main_output)
-        adam=keras.optimizers.Adam(lr=0.0005,decay=0.000005)
-        model.compile(loss='categorical_crossentropy', optimizer=adam, metrics=['accuracy'])
-        history = model.fit(x_train_padded_seqs, y_train, batch_size=1000, epochs=int(params['epoches']), validation_split=float(params['val_split']), verbose=2)
+        model = Sequential()
+        adam = Adam(lr=1e-4, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.0)
+        # 我们从一个有效的嵌入层（embedding layer）开始，它将我们的词汇索引（vocab indices ）映射到词向量的维度上.
+        model.add(Embedding(embedding_matrix_x, embedding_matrix_y, input_length=feature_y, weights=[embedding_matrix],
+                             trainable=True))
+        # 我们增加 GlobalAveragePooling1D, 这将平均计算文档中所有词汇的的词嵌入
+        model.add(GlobalAveragePooling1D())
+        # 我们投射到单个单位的输出层上，并用sigmoid压缩它
+        model.add(Dense(10, activation='softmax'))
+        model.compile(loss='binary_crossentropy',
+                      optimizer=adam,
+                      metrics=['accuracy'])
+        history = model.fit(x_train_padded_seqs, y_train, batch_size=1000, epochs=20, validation_split=0.2, verbose=2)
         showHistory(history)
         showEvaluation(model, x_test_padded_seqs, y_test)
         return model
@@ -55,4 +56,4 @@ class TrainModel():
         return model
 
     def hyperparameters(self):
-        return {'epoches':50,'val_split':0.25}
+        return

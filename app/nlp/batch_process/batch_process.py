@@ -11,6 +11,7 @@ def classificationBatch(data, model, plat):
             for line in lines:
                 value, key = line.split()
                 label_name[int(key)] = value
+        print(model)
         model = load_model(model)
         results = model.predict(features)
         if len(results.shape) > 1:

@@ -1,6 +1,6 @@
 import copy
 import numpy as np
-from flask import request, current_app
+from flask import request, make_response, send_file
 from flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
 
 from . import api
@@ -13,6 +13,8 @@ from app.utils.response_code import *
 from app.utils.codehub_utils import *
 from app.utils.file_utils import *
 from app.utils.venation_utils import *
+from app.utils.time_utils import *
+from app.utils.task_utils import *
 
 
 # 某个数据集特征修改
@@ -64,13 +66,14 @@ def modelUpdate():
     datasetQuery = FeaturesDataset.objects(id=datasetID).first()
     modelQuery = BaseModel.objects(id=modelSelect).first()
     if datasetQuery and datasetQuery.username == username:
-        trainedModel = TrainedModel(username=username, baseModelID=modelSelect, modelName=modelName,
+        trainedModel = TrainedModel(username=username, baseModelID=modelSelect, baseDatasetID=datasetID,
+                                    modelName=modelName,
                                     modelParams=paramsFetchUtil(code), code=code, plat=modelQuery.plat)
         trainedModel.save()
         datasetQuery.model = trainedModel.id
         datasetQuery.modelStatus = '已完成'
         datasetQuery.save()
-    #     创建数据脉络
+        #     创建数据脉络
         venationParent1ID = findNodeID('特征数据集', datasetID)
         createNode([venationParent1ID], '训练模型对象', trainedModel.id)
     return {'code': RET.OK}
@@ -96,6 +99,25 @@ def codeUpdate():
     return {'code': RET.OK}
 
 
+# 某个训练模型下载
+@api.route('/model-train/trainedmodels/ID/model', methods=['GET'])
+@jwt_required
+def trainedModelDownload():
+    # 读取数据
+    info = request.values
+    trainedModelID = int(info.get('trainedmodelid'))
+    username = get_jwt_identity()
+
+    # 文件导出
+    trainedModel = TrainedModel.objects(id=trainedModelID).first()
+    if trainedModel and username == trainedModel.username:
+        url = trainedModel.model
+        response = make_response(send_file(url))
+        response.headers['content-disposition'] = url.split('___')[-1]
+        response.headers['Access-Control-Expose-Headers'] = 'content-disposition'
+        return response
+
+
 # 某个训练模型代码运行
 @api.route('/model-train/trainedmodels/ID/model', methods=['PUT'])
 @jwt_required
@@ -104,26 +126,41 @@ def trainedModelRun():
     info = request.json
     datasetID = int(info.get('datasetid'))
     trainedModelID = int(info.get('trainedmodelid'))
+    modelParams = info.get('modelParams')
     username = get_jwt_identity()
     # 数据库查询
     trainedModelQuery = TrainedModel.objects(id=trainedModelID).first()
     if trainedModelQuery and username == trainedModelQuery.username:
+        datasetQuery = FeaturesDataset.objects(id=datasetID).first()
+        datasetQuery.trainStatus = '训练中'
         trainedModelQuery.trainStatus = '训练中'
+        trainedModelQuery.modelParams = modelParams
+        trainedModelQuery.datetime = getTime()
         trainedModelQuery.save()
-        trainedModelRuntask.delay(trainedModelQuery, datasetID)
+        datasetQuery.save()
+        # 创建任务
+        taskID = createTask('模型训练-' + trainedModelQuery.modelName, '模型训练', trainedModelQuery.id,
+                            trainedModelQuery.modelName,
+                            username)
+        trainedModelRuntask.delay(taskID, trainedModelQuery, datasetQuery)
     return {'code': RET.OK}
 
 
 # 异步训练模型
 @celery.task
-def trainedModelRuntask(trainedModelQuery, datasetID):
-    result, model = modelRunUtil(trainedModelQuery.code, datasetID, trainedModelQuery.id)
+def trainedModelRuntask(taskID, trainedModelQuery, datasetQuery):
+    result, model = modelRunUtil(trainedModelQuery.code, datasetQuery.id, trainedModelQuery.id)
+
     if model != None:
         modelURL = getFileURL('model.h5', app)
         model.save(modelURL)
+        print(modelURL)
         trainedModelQuery.model = modelURL
     trainedModelQuery.result = result
     trainedModelQuery.trainStatus = '已完成'
+    datasetQuery.trainStatus = '已完成'
+    trainedModelQuery.endtime = getTime()
     trainedModelQuery.save()
-    print(trainedModelQuery.trainStatus)
+    datasetQuery.save()
+    completeTask(taskID)
     return '模型训练成功'

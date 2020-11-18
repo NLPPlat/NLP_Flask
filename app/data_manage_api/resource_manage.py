@@ -8,6 +8,7 @@ from app.utils.vector_uitls import *
 from app.utils.response_code import *
 from app.utils.common_utils import *
 from app.utils.file_utils import *
+from app.utils.time_utils import *
 
 
 # 资源列表获取
@@ -66,6 +67,6 @@ def resourceUpload():
     # 存入Resource数据库
     resource = Resource(username=username, resourceType=info.get('resourceType'),
                                resourceName=info.get('resourceName'), desc=info.get('desc'),
-                               publicity=info.get('publicity'), url=fileurl)
+                               publicity=info.get('publicity'), url=fileurl,datetime=getTime())
     resource.save()
     return "success"

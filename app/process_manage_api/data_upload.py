@@ -9,6 +9,7 @@ from app.utils.file_utils import *
 from app.utils.vector_uitls import *
 from app.utils.task_utils import *
 from app.utils.venation_utils import *
+from app.utils.time_utils import *
 
 
 # 训练数据集文件上传
@@ -27,7 +28,7 @@ def trainFileUpload():
     originalDataset = OriginalDataset(username=username, taskType=info.get('taskType'),
                                       taskName=info.get('taskName'), datasetType='原始数据集',
                                       desc=info.get('desc'), publicity=info.get('publicity'), originalFile=fileurl,
-                                      analyseStatus='解析中', annotationStatus='未开始')
+                                      analyseStatus='解析中', annotationStatus='未开始', datetime=getTime())
     if info.get('taskType') == '文本排序学习':
         originalDataset.groupOn = 'on'
     originalDataset.save()
@@ -73,7 +74,7 @@ def batchFileUpload():
                                                 taskName=info.get('taskName'),
                                                 datasetType='批处理数据集', desc=info.get('desc'),
                                                 publicity=info.get('publicity'),
-                                                originalFile=fileurl, analyseStatus='解析中')
+                                                originalFile=fileurl, analyseStatus='解析中', datetime=getTime())
     if info.get('taskType') == '文本排序学习':
         originalBatchDataset.groupOn = 'on'
     originalBatchDataset.save()

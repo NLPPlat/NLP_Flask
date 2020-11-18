@@ -10,4 +10,4 @@ class Resource(db.DynamicDocument):
     url=db.StringField(required=True)
     desc = db.StringField()
     publicity = db.StringField(required=True)
-    datetime = db.DateTimeField(default=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+    datetime = db.DateTimeField()

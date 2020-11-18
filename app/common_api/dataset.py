@@ -9,6 +9,7 @@ from app.utils.vector_uitls import *
 from app.utils.response_code import *
 from app.utils.dataset_utils import *
 from app.utils.file_utils import *
+from app.utils.task_utils import *
 
 
 # 数据集列表获取
@@ -100,8 +101,11 @@ def datasetCopy():
     # 读取原数据集
     datasetInit = Dataset.objects(id=int(datasetInitID)).first()
     venationInit = Venation.objects(ancestor=int(datasetInitID)).first()
+    # 创建任务
+    taskID = createTask('数据集拷贝-' + datasetInit.taskName, '数据集拷贝', datasetInit.id, datasetInit.taskName,
+                        username)
     # 拷贝
-    copy.delay(datasetInit, datasetInitType, copyDes, username, venationInit, params)
+    copy.delay(taskID,datasetInit, datasetInitType, copyDes, username, venationInit, params)
     return {'code': RET.OK}
 
 
@@ -134,7 +138,7 @@ def datasetInfoFetch():
                          'modelStatus', 'model']
         elif datasetType == '批处理特征集':
             queryList = ['id', 'username', 'taskType', 'taskName', 'desc', 'publicity', 'datetime', 'batchStatus',
-                         'resultDataset']
+                         'resultDataset','begintime','endtime']
         dataResult = {}
         for item in queryList:
             dataResult[item] = datasetQuery[item]

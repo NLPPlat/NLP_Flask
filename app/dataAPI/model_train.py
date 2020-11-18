@@ -42,6 +42,13 @@ def getTrainAndTest():
     return data
 
 
+def getParams():
+    trainedModelID=getTrainedModel()
+    trainedModel=TrainedModel.objects(id=trainedModelID).first()
+    return trainedModel.modelParams
+
+
+
 # 展示图片
 def saveFig(fig, name):
     sio = BytesIO()
@@ -78,6 +85,7 @@ def showHistory(history):
     return
 
 
+# 展示评价指标
 def showEvaluation(model, x_test, y_test):
     from sklearn import metrics
 
@@ -96,3 +104,12 @@ def showEvaluation(model, x_test, y_test):
     trainModelQuery.evaluation = evaluation
     trainModelQuery.save()
     return
+
+
+# 数据集shuffle
+def doShuffle(x, y):
+    indices = np.arange(x.shape[0])
+    np.random.shuffle(indices)
+    x = x[indices]
+    y = y[indices]
+    return x, y
