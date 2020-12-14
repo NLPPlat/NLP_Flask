@@ -3,13 +3,12 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 
 from . import api
 from manage import celery, app
-from app.models.dataset import *
-from app.models.venation import *
 from app.utils.file_utils import *
 from app.utils.vector_uitls import *
 from app.utils.task_utils import *
 from app.utils.venation_utils import *
 from app.utils.time_utils import *
+from app.utils.response_code import *
 
 
 # 训练数据集文件上传
@@ -26,31 +25,35 @@ def trainFileUpload():
     originalFile.save(fileurl)
     # 存入Dataset数据库
     originalDataset = OriginalDataset(username=username, taskType=info.get('taskType'),
-                                      taskName=info.get('taskName'), datasetType='原始数据集',
+                                      taskName=info.get('taskName'), datasetType='训练数据集',
                                       desc=info.get('desc'), publicity=info.get('publicity'), originalFile=fileurl,
                                       analyseStatus='解析中', annotationStatus='未开始', datetime=getTime())
-    if info.get('taskType') == '文本排序学习':
-        originalDataset.groupOn = 'on'
     originalDataset.save()
+    # 创建节点和任务
     createNode([], '训练数据集', originalDataset.id)
-    # 创建任务
     taskID = createTask('数据接入-' + originalDataset.taskName, '数据接入', originalDataset.id, originalDataset.taskName,
                         username)
-    # 解析文件
+    # 解析文件异步任务
     trainFileUploadAnalyse.delay(fileurl, originalDataset, taskID)
-    return "success"
+    return {'code': RET.OK}
 
 
-# 训练数据集文件解析
+# 训练数据集文件解析异步任务
 @celery.task
 def trainFileUploadAnalyse(fileurl, originalDataset, taskID):
+    # 读取文件
     datasetID = originalDataset.id
     vectors = fileReader(fileurl)
+    groupOn = False
     for vector in vectors:
         vector['datasetid'] = datasetID
         if 'group' in vector:
             vector['group'] = int(vector['group'])
+            groupOn = True
     vectors_insert(vectors)
+    if groupOn:
+        originalDataset.groupOn = 'on'
+    # 解析完成，状态写入
     originalDataset.analyseStatus = '解析完成'
     originalDataset.save()
     completeTask(taskID)
@@ -75,29 +78,33 @@ def batchFileUpload():
                                                 datasetType='批处理数据集', desc=info.get('desc'),
                                                 publicity=info.get('publicity'),
                                                 originalFile=fileurl, analyseStatus='解析中', datetime=getTime())
-    if info.get('taskType') == '文本排序学习':
-        originalBatchDataset.groupOn = 'on'
     originalBatchDataset.save()
+    # 创建节点和任务
     createNode([], '批处理数据集', originalBatchDataset.id)
-    # 创建任务
     taskID = createTask('数据接入-' + originalBatchDataset.taskName, '数据接入', originalBatchDataset.id,
                         originalBatchDataset.taskName,
                         username)
-    # 解析文件
+    # 解析文件异步任务
     batchFileUploadAnalyse.delay(fileurl, originalBatchDataset, taskID)
     return "success"
 
 
-# 训练数据集文件解析
+# 批处理数据集文件解析异步任务
 @celery.task
 def batchFileUploadAnalyse(fileurl, originalBatchDataset, taskID):
+    # 读取文件
     datasetID = originalBatchDataset.id
     vectors = fileReader(fileurl)
+    groupOn = False
     for vector in vectors:
         vector['datasetid'] = datasetID
         if 'group' in vector:
             vector['group'] = int(vector['group'])
+            groupOn=True
     vectors_insert(vectors, '批处理数据集')
+    if groupOn:
+        originalBatchDataset.groupOn = 'on'
+    # 解析完成，状态写入
     originalBatchDataset.analyseStatus = '解析完成'
     originalBatchDataset.save()
     completeTask(taskID)

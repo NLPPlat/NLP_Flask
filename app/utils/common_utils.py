@@ -45,7 +45,10 @@ def getFileName(fileurl):
 # 文件类型获取
 def getFileType(fileurl):
     if fileurl != '' and fileurl != []:
-        fileType = fileurl.split('.')[-1] + '文件'
+        if '.' in fileurl:
+            fileType = fileurl.split('.')[-1] + '文件'
+        else:
+            fileType = '未知类型文件'
     else:
         fileType = ''
     return fileType

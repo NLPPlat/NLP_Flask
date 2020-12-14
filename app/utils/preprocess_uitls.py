@@ -41,10 +41,11 @@ def getDataForFront(dataset, preprocessID):
     # 读取数据
     preprocessObj = dataset.data.filter(id=preprocessID).first().to_mongo().to_dict()
     preprocessObj['label'] = getFileInfo(preprocessObj['label'])
-    preprocessObj['label_name'] = getFileInfo(preprocessObj['label_name'])
+    preprocessObj['label_id'] = getFileInfo(preprocessObj['label_id'])
     preprocessObj['feature'] = getFileInfo(preprocessObj['feature'])
     preprocessObj['embedding'] = getFileInfo(preprocessObj['embedding'])
     preprocessObj['embedding_matrix'] = getFileInfo(preprocessObj['embedding_matrix'])
+    preprocessObj['vocabs'] = getFileInfo(preprocessObj['vocabs'])
     return preprocessObj
 
 

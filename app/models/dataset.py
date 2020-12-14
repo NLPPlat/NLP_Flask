@@ -23,11 +23,11 @@ class Dataset(db.DynamicDocument):
     taskType = db.StringField(required=True)
     taskName = db.StringField(required=True)
     datasetType = db.StringField(required=True)
-    ancestor = db.IntField()
     desc = db.StringField()
     publicity = db.StringField(required=True)
     datetime = db.DateTimeField()
     groupOn = db.StringField(default='off')
+    analyseStatus = db.StringField()
     meta = {'allow_inheritance': True}
 
 
@@ -36,12 +36,10 @@ class OriginalVector(Vector):
     pass
 
 
-# 原始数据集
+# 训练数据集
 class OriginalDataset(Dataset):
     originalFile = db.StringField(required=True)
     originalFileSize = db.StringField()
-    originalData = db.ListField()
-    analyseStatus = db.StringField(required=True)
     annotationStatus = db.StringField(required=True)
     annotationFormat = db.DynamicField()
     annotationPublicity = db.StringField(default='不允许')
@@ -57,7 +55,6 @@ class OriginalBatchDataset(Dataset):
     originalFile = db.StringField(required=True)
     originalFileSize = db.StringField()
     originalData = db.ListField()
-    analyseStatus = db.StringField(required=True)
 
 
 # 预处理向量
@@ -76,7 +73,8 @@ class PreprocessObject(db.EmbeddedDocument):
     embedding_matrix = db.StringField(default='')
     vectors = db.ListField(default=[])
     label = db.StringField(default='')
-    label_name = db.DynamicField(default='')
+    label_id = db.StringField(default='')
+    vocabs = db.StringField(default='')
 
 
 # 预处理数据集
@@ -100,7 +98,8 @@ class FeaturesObject(db.EmbeddedDocument):
     embedding_matrix = db.StringField(default='')
     vectors = db.ListField(default=[])
     label = db.StringField(default='')
-    label_name = db.DynamicField(default='')
+    label_id = db.StringField(default='')
+    vocabs = db.StringField(default='')
 
 
 # 特征数据集

@@ -18,51 +18,39 @@ def getTags():
 
     # 读取数据库
     datasetQuery = OriginalDataset.objects(id=int(datasetID)).first()
-    if datasetQuery and username == datasetQuery.username:
-        pass
-    return {'code': 200, 'data': {'annotationFormat': datasetQuery.annotationFormat}}
+    if datasetQuery and (username == datasetQuery.username or datasetQuery.publicity == '公开'):
+        return {'code': RET.OK, 'data': {'annotationFormat': datasetQuery.annotationFormat}}
+    else:
+        return {'code': RET.FORBBIDEN, 'message': error_map[RET.FORBBIDEN]}
 
 
-# 某个数据集标注任务配置
+# 某个数据集标注任务配置创建
 @api.route('/annotation/datasets/ID/annotation/config', methods=['POST'])
 @jwt_required
 def annotationConfig():
     # 读取基本数据
     info = request.json
     datasetID = info.get("id")
-    annotationFormat=info.get('annotationFormat')
-    annotationPublicity=info.get('annotationPublicity')
+    annotationFormat = info.get('annotationFormat')
+    annotationPublicity = info.get('annotationPublicity')
     username = get_jwt_identity()
 
     # 数据库写入
     datasetQuery = OriginalDataset.objects(id=int(datasetID)).first()
     if datasetQuery and username == datasetQuery.username:
-        datasetQuery.annotationFormat=annotationFormat
+        datasetQuery.annotationFormat = annotationFormat
         datasetQuery.annotationStatus = '标注中'
         datasetQuery.annotationPublicity = annotationPublicity
+        if annotationPublicity == '允许':
+            datasetQuery.publicity = '公开'
         datasetQuery.save()
-        return {'code': 200, 'message': '任务配置成功'}
+        return {'code': RET.OK}
     else:
-        return {'code': 400, 'message': '未找到该数据集'}
+        return {'code': RET.FORBBIDEN, 'message': error_map[RET.FORBBIDEN]}
 
 
-# 数据向量获取
-@api.route('/annotation/detail/vector', methods=['GET'])
-@jwt_required
-def getDataVector():
-    getInfo = request.values
-    datasetID = getInfo.get("datasetid")
-    vectorID = getInfo.get('vectorid')
-    username = get_jwt_identity()
-    datasetQuery = OriginalDataset.objects(id=int(datasetID)).first()
-    if datasetQuery and username == datasetQuery.username:
-        vectorQuery = datasetQuery.originalData.filter(id=int(vectorID))
-    return {'code': 200, 'data': {'vector': vectorQuery.first()}}
-
-
-
-# 更新标注状态
-@api.route('annotation/status/ID', methods=['POST'])
+# 某个数据集标注状态更新
+@api.route('annotation/datasets/ID/annotation/status', methods=['PUT'])
 @jwt_required
 def completeAnnotationStatus():
     # 读取基本数据
@@ -75,11 +63,13 @@ def completeAnnotationStatus():
     if datasetQuery and username == datasetQuery.username:
         datasetQuery.annotationStatus = '标注完成'
         datasetQuery.save()
-    return {'code': RET.OK}
+        return {'code': RET.OK}
+    else:
+        return {'code': RET.FORBBIDEN, 'message': error_map[RET.FORBBIDEN]}
 
 
-# 某个数据集标注进度查询
-@api.route('annotation/datasets/ID/progress', methods=['GET'])
+# 某个数据集标注进度获取
+@api.route('annotation/datasets/ID/annotation/progress', methods=['GET'])
 @jwt_required
 def fetchAnnotationProgress():
     # 读取基本数据
@@ -89,7 +79,9 @@ def fetchAnnotationProgress():
 
     # 查询数量
     datasetQuery = OriginalDataset.objects(id=datasetID).first()
-    if datasetQuery and username == datasetQuery.username:
-        nolabelCount,nolabelVectors=vectors_select(datasetID,{'label':'','deleted':'未删除'})
-        allCount,allVectors=vectors_select(datasetID,{'deleted':'未删除'})
-    return {'code': RET.OK, 'data': {'nolabelCount': nolabelCount, 'allCount': allCount}}
+    if datasetQuery and (username == datasetQuery.username or datasetQuery.publicity == '公开'):
+        nolabelCount, nolabelVectors = vectors_select(datasetID, {'label': '', 'deleted': '未删除'})
+        allCount, allVectors = vectors_select(datasetID, {'deleted': '未删除'})
+        return {'code': RET.OK, 'data': {'nolabelCount': nolabelCount, 'allCount': allCount}}
+    else:
+        return {'code': RET.FORBBIDEN, 'message': error_map[RET.FORBBIDEN]}

@@ -5,8 +5,8 @@ from app.models.dataset import *
 
 
 # 某个数据集全部向量插入
-def vectors_insert(vectors, datasetType='原始数据集'):
-    if datasetType == '原始数据集':
+def vectors_insert(vectors, datasetType='训练数据集'):
+    if datasetType == '训练数据集':
         for vector in vectors:
             if '_cls' in vector:
                 vector.pop('_cls')
@@ -71,10 +71,10 @@ def vectors_select_one(datasetid, vectorid):
 
 
 # 某个原始数据集/批处理数据集批量向量获取(分页功能)
-def vectors_select_divide(datasetid, deleted, limit, page, datasetType='原始数据集'):
+def vectors_select_divide(datasetid, deleted, limit, page, datasetType='训练数据集'):
     front = limit * (page - 1)
     end = limit * page
-    if datasetType == '原始数据集':
+    if datasetType == '训练数据集':
         vectors = OriginalVector.objects(Q(datasetid=datasetid) & Q(deleted=deleted))
     elif datasetType == '批处理数据集':
         vectors = OriginalBatchVector.objects(Q(datasetid=datasetid) & Q(deleted=deleted))
@@ -91,7 +91,7 @@ def vectors_select_divide_preprocess(datasetid, preprocessid, limit, page):
     return vectors.count(), vectors[front:end]
 
 
-# 某个原始数据集全部向量获取
+# 某个数据集全部向量获取
 def vectors_select_all(datasetid):
     vectors = Vector.objects(datasetid=datasetid)
     return vectors
@@ -101,6 +101,16 @@ def vectors_select_all(datasetid):
 def vectors_select_all_preprocess(datasetid, preprocessid):
     vectors = Vector.objects(Q(datasetid=datasetid) & Q(preprocessid=preprocessid))
     return vectors
+
+# 某个数据集第一个向量获取
+def vectors_select_first(datasetid):
+    vector = Vector.objects(datasetid=datasetid).first()
+    return vector
+
+# 某个数据集最后一个向量获取
+def vectors_select_last(datasetid):
+    vector = Vector.objects(datasetid=datasetid).order_by('-vectorid').first()
+    return vector
 
 
 # 某个数据集全部向量删除

@@ -14,5 +14,6 @@ class RET:
 
 error_map = {
     RET.OK                    : u"成功",
-    RET.CREATED               : u"新建或修改数据成功"
+    RET.CREATED               : u"新建或修改数据成功",
+    RET.FORBBIDEN             : u"无权限访问"
 }
