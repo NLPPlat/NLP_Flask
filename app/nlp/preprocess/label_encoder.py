@@ -8,7 +8,7 @@ from app.utils.file_utils import *
 def single_label_encoder(data, params, type):
     # 初始化
     label = []
-    label_name = {}
+    label_id = {}
     # 转换
     for vector in data['vectors']:
         label.append(vector['label'])
@@ -17,7 +17,7 @@ def single_label_encoder(data, params, type):
     label = encoder.transform(label)
     # 获得标签排序
     target_name = encoder.classes_
-    label_names = target_name.tolist()
+    label_ids = target_name.tolist()
     # 存储
     npyURL = getFileURL('label.npy', app)
     np.save(npyURL, label)
@@ -25,17 +25,17 @@ def single_label_encoder(data, params, type):
     txtURL = getFileURL('label2id.txt', app)
     with open(txtURL, 'a', encoding='utf-8') as f:
         i = 0
-        for label_name in label_names:
-            f.write(label_name + ' ' + str(i) + '\n')
+        for label_id in label_ids:
+            f.write(label_id + ' ' + str(i) + '\n')
             i=i+1
-    data['label_name'] = txtURL
+    data['label_id'] = txtURL
     return data
 
 
 def BIO_label_encoder(data, params, type):
     # 初始化
     label = []
-    label_name = {}
+    label_id = {}
     # 转换
     for vector in data['vectors']:
         text = vector['text1']

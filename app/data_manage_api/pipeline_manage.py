@@ -70,7 +70,7 @@ def pipelineConstruction():
         # 适配步骤内容
         pipeline = Pipeline(username=username, pipelineName=pipelineName, publicity=publicity,
                             taskType=datasetQuery.taskType)
-        preprocessPreviousObj = {'label_name': '', 'embedding': ''}
+        preprocessPreviousObj = {'label_id': '', 'embedding': ''}
         while len(preprocessIndexes) > 0:
             preprocessIndex = preprocessIndexes.pop(-1)
             preprocessObj = datasetQuery.data.filter(id=preprocessIndex).first().to_mongo().to_dict()
@@ -79,8 +79,8 @@ def pipelineConstruction():
                                          preprocessName=preprocessStatusObj['preprocessName'],
                                          preprocessParams=preprocessStatusObj['preprocessParams'],
                                          sparkSupport=preprocessStatusObj['sparkSupport'])
-            if preprocessPreviousObj['label_name'] != preprocessObj['label_name']:
-                pipelineObj.pipeline = {'label_name': preprocessObj['label_name']}
+            if preprocessPreviousObj['label_id'] != preprocessObj['label_id']:
+                pipelineObj.pipeline = {'label_id': preprocessObj['label_id']}
             if preprocessPreviousObj['embedding'] != preprocessObj['embedding']:
                 pipelineObj.pipeline = {'embedding': preprocessObj['embedding']}
             preprocessPreviousObj = preprocessObj

@@ -132,7 +132,7 @@ class FeaturesBatchObject(db.EmbeddedDocument):
     embedding_matrix = db.StringField(default='')
     vectors = db.ListField(default=[])
     label = db.StringField(default='')
-    label_name = db.DynamicField(default='')
+    label_id = db.DynamicField(default='')
 
 
 # 批处理特征集

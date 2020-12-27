@@ -10,6 +10,7 @@ from app.utils.response_code import *
 from app.utils.dataset_utils import *
 from app.utils.file_utils import *
 from app.utils.task_utils import *
+from app.utils.permission_utils import *
 
 
 # 数据集列表获取
@@ -23,6 +24,10 @@ def datasetListFetch():
     username = get_jwt_identity()
     datasetType = info.get('datasetType')
 
+    # 获得用户信息
+    user = User.objects(username=username).first()
+    roles = user.roles
+
     # 设置通用查询条件Q
     taskTypeFilter = info.getlist('taskType[]')
     usernameFilter = info.getlist('username[]')
@@ -32,11 +37,17 @@ def datasetListFetch():
     if len(queryTaskName) > 0:
         q = q & Q(taskName__icontains=queryTaskName)
     if '自己' in usernameFilter and '他人' in usernameFilter:
-        q = q & (Q(username=username) | Q(publicity='公开'))
+        if 'admin' in roles:
+            pass
+        else:
+            q = q & (Q(username=username) | Q(publicity='公开'))
     elif '自己' in usernameFilter:
         q = q & Q(username=username)
     else:
-        q = q & (Q(username__ne=username) | Q(publicity='公开'))
+        if 'admin' in roles:
+            q = q & Q(username__ne=username)
+        else:
+            q = q & (Q(username__ne=username) & Q(publicity='公开'))
 
     # 设置独立查询条件
     analyseStatusFilter = ['解析完成']
@@ -89,11 +100,10 @@ def datasetCopy():
 
     # 读取数据集信息
     datasetInit = Dataset.objects(id=int(datasetInitID)).first()
-    if datasetInit and (username == datasetInit.username or datasetInit.publicity == '公开'):
-        datasetDesID = copyManage(datasetInit, copyDes, username, params)
-        return {'code': RET.OK, 'data': {'datasetDesID': datasetDesID}}
-    else:
-        return {'code': RET.FORBBIDEN, 'message': error_map[RET.FORBBIDEN]}
+    if not datasetReadPermission(datasetInit, username):
+        return noPeimissionReturn()
+    datasetDesID = copyManage(datasetInit, copyDes, username, params)
+    return {'code': RET.OK, 'data': {'datasetDesID': datasetDesID}}
 
 
 # 某个数据集信息获取
@@ -107,11 +117,10 @@ def datasetInfoFetch():
 
     # 查找数据集
     datasetQuery = Dataset.objects(id=int(datasetID)).first()
-    if datasetQuery and (username == datasetQuery.username or datasetQuery.publicity == '公开'):
-        dataResult = datasetQuery.to_mongo().to_dict()
-        return {'code': RET.OK, 'data': dataResult}
-    else:
-        return {'code': RET.FORBBIDEN, 'message': error_map[RET.FORBBIDEN]}
+    if not datasetReadPermission(datasetQuery, username):
+        return noPeimissionReturn()
+    dataResult = datasetQuery.to_mongo().to_dict()
+    return {'code': RET.OK, 'data': dataResult}
 
 
 # 某个数据集信息更新
@@ -126,13 +135,12 @@ def datasetInfoUpdate():
 
     # 查找数据集
     datasetQuery = Dataset.objects(id=int(datasetID)).first()
-    if datasetQuery and username == datasetQuery.username:
-        for key in infos:
-            datasetQuery[key] = infos[key]
-            datasetQuery.save()
-        return {'code': RET.OK}
-    else:
-        return {'code': RET.FORBBIDEN, 'message': error_map[RET.FORBBIDEN]}
+    if not datasetWritePermission(datasetQuery, username):
+        return noPeimissionReturn()
+    for key in infos:
+        datasetQuery[key] = infos[key]
+        datasetQuery.save()
+    return {'code': RET.OK}
 
 
 # 某个数据集名称、描述信息更新
@@ -148,13 +156,12 @@ def datasetInfoVerity():
 
     # 修改任务信息
     datasetQuery = Dataset.objects(id=int(datasetID)).first()
-    if datasetQuery and username == datasetQuery.username:
-        datasetQuery.taskName = taskName
-        datasetQuery.desc = desc
-        datasetQuery.save()
-        return {'code': RET.OK}
-    else:
-        return {'code': RET.FORBBIDEN, 'message': error_map[RET.FORBBIDEN]}
+    if not datasetWritePermission(datasetQuery, username):
+        return noPeimissionReturn()
+    datasetQuery.taskName = taskName
+    datasetQuery.desc = desc
+    datasetQuery.save()
+    return {'code': RET.OK}
 
 
 # 某个数据集删除
@@ -169,11 +176,10 @@ def datasetDelete():
 
     # 查找判断并删除
     datasetQuery = Dataset.objects(id=int(datasetID)).first()
-    if datasetQuery and username == datasetQuery.username:
-        datasetQuery.delete()
-        return {'code': RET.OK}
-    else:
-        return {'code': RET.FORBBIDEN, 'message': error_map[RET.FORBBIDEN]}
+    if not datasetWritePermission(datasetQuery, username):
+        return noPeimissionReturn()
+    datasetQuery.delete()
+    return {'code': RET.OK}
 
 
 # 某个数据集向量获取
@@ -190,11 +196,10 @@ def datasetVectorsFetch():
 
     # 数据库查询
     datasetQuery = Dataset.objects(id=int(datasetID)).first()
-    if datasetQuery and (username == datasetQuery.username or datasetQuery.publicity == '公开'):
-        count, vectors = vectors_select_divide(datasetID, deleted, limit, page, datasetQuery.datasetType)
-        return {'code': RET.OK, 'data': {'items': vectors, 'total': count}}
-    else:
-        return {'code': RET.FORBBIDEN, 'message': error_map[RET.FORBBIDEN]}
+    if not datasetReadPermission(datasetQuery, username):
+        return noPeimissionReturn()
+    count, vectors = vectors_select_divide(datasetID, deleted, limit, page, datasetQuery.datasetType)
+    return {'code': RET.OK, 'data': {'items': vectors, 'total': count}}
 
 
 # 某个数据集某条向量获取
@@ -209,11 +214,10 @@ def datasetVectorFetch():
 
     # 数据查询
     datasetQuery = Dataset.objects(id=int(datasetID)).first()
-    if datasetQuery and (username == datasetQuery.username or datasetQuery.publicity == '公开'):
-        vector = vectors_select_one(datasetID, vectorID)
-        return {'code': RET.OK, 'data': {'vector': vector}}
-    else:
-        return {'code': RET.FORBBIDEN, 'message': error_map[RET.FORBBIDEN]}
+    if not datasetReadPermission(datasetQuery, username):
+        return noPeimissionReturn()
+    vector = vectors_select_one(datasetID, vectorID)
+    return {'code': RET.OK, 'data': {'vector': vector}}
 
 
 # 某个数据集某条向量更新
@@ -229,15 +233,14 @@ def datasetVectorUpdate():
 
     # 数据格式转换
     datasetQuery = Dataset.objects(id=int(datasetID)).first()
-    if datasetQuery and (username == datasetQuery.username or datasetQuery.annotationPublicity == '允许'):
-        vectorDict = json.loads(vector)
-        if 'edit' in vectorDict:
-            vectorDict.pop('edit')
-        # 数据库修改
-        vector_update(datasetID, vectorID, vectorDict)
-        return {'code': RET.OK}
-    else:
-        return {'code': RET.FORBBIDEN, 'message': error_map[RET.FORBBIDEN]}
+    if not datasetWritePermission(datasetQuery, username):
+        return noPeimissionReturn()
+    vectorDict = json.loads(vector)
+    if 'edit' in vectorDict:
+        vectorDict.pop('edit')
+    # 数据库修改
+    vector_update(datasetID, vectorID, vectorDict)
+    return {'code': RET.OK}
 
 
 # 某个数据集某个group的vectors获取
@@ -252,11 +255,10 @@ def groupVectorsFetch():
 
     # 数据库查询
     datasetQuery = OriginalDataset.objects(id=int(datasetID)).first()
-    if datasetQuery and (username == datasetQuery.username or datasetQuery.publicity == '公开'):
-        count, vectors = vectors_select(datasetID, {'group': group, 'deleted': '未删除'})
-        return {'code': RET.OK, 'data': {'vectors': vectors, 'count': count}}
-    else:
-        return {'code': RET.FORBBIDEN, 'message': error_map[RET.FORBBIDEN]}
+    if not datasetReadPermission(datasetQuery, username):
+        return noPeimissionReturn()
+    count, vectors = vectors_select(datasetID, {'group': group, 'deleted': '未删除'})
+    return {'code': RET.OK, 'data': {'vectors': vectors, 'count': count}}
 
 
 # 某个数据集某个group的vectors更新
@@ -293,16 +295,15 @@ def datasetTotalInfoFetch():
 
     # 数据查询
     datasetQuery = OriginalDataset.objects(id=int(datasetID)).first()
-    if datasetQuery and (username == datasetQuery.username or datasetQuery.publicity == '公开'):
-        if type == 0:
-            min = vectors_select_first(datasetID).vectorid
-            max = vectors_select_last(datasetID).vectorid
-        else:
-            min = vectors_select_first(datasetID).group
-            max = vectors_select_last(datasetID).group
-        return {'code': RET.OK, 'data': {'max': max, 'min': min}}
+    if not datasetReadPermission(datasetQuery, username):
+        return noPeimissionReturn()
+    if type == 0:
+        min = vectors_select_first(datasetID).vectorid
+        max = vectors_select_last(datasetID).vectorid
     else:
-        return {'code': RET.FORBBIDEN, 'message': error_map[RET.FORBBIDEN]}
+        min = vectors_select_first(datasetID).group
+        max = vectors_select_last(datasetID).group
+    return {'code': RET.OK, 'data': {'max': max, 'min': min}}
 
 
 # 部分数据集信息获取

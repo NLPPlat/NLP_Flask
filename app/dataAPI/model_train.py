@@ -6,22 +6,18 @@ from sklearn.model_selection import *
 from app.models.dataset import *
 from app.models.model import *
 from app.utils.global_utils import *
+from app.utils.common_utils import *
 
 
 # 获得训练数据
-def getAllData():
+def getAllData(type=0):
     datasetQuery = FeaturesDataset.objects(id=int(getDataset())).first()
     data = datasetQuery.features
     data.to_mongo().to_dict()
-    if 'feature' in data:
-        if data['feature'] != '':
-            data['feature'] = np.load(data['feature'])
-    if 'label' in data:
-        if data['label'] != '':
-            data['label'] = np.load(data['label'])
-    if 'embedding_matrix' in data:
-        if data['embedding_matrix'] != '':
-            data['embedding_matrix'] = np.load(data['embedding_matrix'])
+    if type == 0:
+        data['feature'] = getFileContent(data['feature'])
+        data['label'] = getFileContent(data['label'])
+        data['embedding_matrix'] = getFileContent(data['embedding_matrix'])
     return data.to_mongo().to_dict()
 
 
@@ -33,20 +29,19 @@ def getTrainAndTest():
     testURL = datasetQuery.test.feature
     trainLabel = datasetQuery.features.label
     testLabel = datasetQuery.test.label
-    label_name = datasetQuery.features.label_name
+    label_id = datasetQuery.features.label_id
     data['x_train'] = np.load(trainURL)
     data['x_test'] = np.load(testURL)
     data['y_train'] = np.load(trainLabel)
     data['y_test'] = np.load(testLabel)
-    data['label_name'] = label_name
+    data['label_id'] = label_id
     return data
 
 
 def getParams():
-    trainedModelID=getTrainedModel()
-    trainedModel=TrainedModel.objects(id=trainedModelID).first()
+    trainedModelID = getTrainedModel()
+    trainedModel = TrainedModel.objects(id=trainedModelID).first()
     return trainedModel.modelParams
-
 
 
 # 展示图片

@@ -93,7 +93,6 @@ def codeUpdate():
     trainedmodelQuery = TrainedModel.objects(id=trainedmodelID).first()
     if trainedmodelQuery and username == trainedmodelQuery.username:
         trainedmodelQuery.code = code
-        print(paramsFetchUtil(code))
         trainedmodelQuery.modelParams = paramsFetchUtil(code)
         trainedmodelQuery.save()
     return {'code': RET.OK}
@@ -154,7 +153,6 @@ def trainedModelRuntask(taskID, trainedModelQuery, datasetQuery):
     if model != None:
         modelURL = getFileURL('model.h5', app)
         model.save(modelURL)
-        print(modelURL)
         trainedModelQuery.model = modelURL
     trainedModelQuery.result = result
     trainedModelQuery.trainStatus = '已完成'

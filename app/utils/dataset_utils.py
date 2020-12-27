@@ -49,7 +49,8 @@ def venationRegister(datasetInit, datasetDes, params):
 def copyMyself(datasetInit, username, params):
     # 按类别拷贝
     if datasetInit.datasetType == '训练数据集':
-        datasetDes = OriginalDataset(username=username, taskType=datasetInit.taskType, taskName=datasetInit.taskName,
+        datasetDes = OriginalDataset(username=username, taskType=datasetInit.taskType,
+                                     taskName=datasetInit.taskName + '-拷贝',
                                      datasetType=datasetInit.datasetType, desc=datasetInit.desc,
                                      publicity=datasetInit.publicity, originalFile=datasetInit.originalFile,
                                      analyseStatus='解析中',
@@ -57,16 +58,28 @@ def copyMyself(datasetInit, username, params):
                                      annotationFormat=datasetInit.annotationFormat, datetime=getTime())
     elif datasetInit.datasetType == '批处理数据集':
         datasetDes = OriginalBatchDataset(username=username, taskType=datasetInit.taskType,
-                                          taskName=datasetInit.taskName,
+                                          taskName=datasetInit.taskName + '-拷贝',
                                           datasetType=datasetInit.datasetType, desc=datasetInit.desc,
                                           publicity=datasetInit.publicity, originalFile=datasetInit.originalFile,
                                           analyseStatus='解析中', datetime=getTime())
     elif datasetInit.datasetType == '预处理数据集':
         datasetDes = PreprocessDataset(username=username, taskType=datasetInit.taskType,
-                                       taskName=datasetInit.taskName,
+                                       taskName=datasetInit.taskName + '-拷贝',
                                        datasetType=datasetInit.datasetType, desc=datasetInit.desc,
                                        data=datasetInit.data, publicity=datasetInit.publicity, analyseStatus='解析中',
                                        preprocessStatus=datasetInit.preprocessStatus, datetime=getTime())
+    elif datasetInit.datasetType == '特征数据集':
+        datasetDes = FeaturesDataset(username=username, taskType=datasetInit.taskType,
+                                     taskName=datasetInit.taskName + '-拷贝',
+                                     datasetType=datasetInit.datasetType, desc=datasetInit.desc,
+                                     publicity=datasetInit.publicity, analyseStatus='解析中',
+                                     trainStatus='未开始', datetime=getTime())
+    elif datasetInit.datasetType == '批处理特征集':
+        datasetDes = FeaturesBatchDataset(username=username, taskType=datasetInit.taskType,
+                                          taskName=datasetInit.taskName + '-拷贝',
+                                          datasetType=datasetInit.datasetType, desc=datasetInit.desc,
+                                          publicity=datasetInit.publicity, analyseStatus='解析中',
+                                          batchStatus='未开始', datetime=getTime())
     datasetDes.save()
     return datasetDes
 
@@ -119,35 +132,49 @@ def copyVectors(taskID, datasetInit, datasetDes, params):
             vector['datasetid'] = datasetDes.id
         vectors_insert(vectors, '预处理数据集')
 
-    elif datasetDes.datasetType == '特征数据集':
+    elif datasetInit.datasetType == '预处理数据集' and datasetDes.datasetType == '特征数据集':
         if 'preprocessid' not in params:
             params['preprocessid'] = datasetInit.data[-1].id
         for preprocess in datasetInit.data:
             if preprocess.id == int(params['preprocessid']):
-                features = FeaturesObject(label=preprocess.label, label_name=preprocess.label_name,
-                                          feature=preprocess.feature, vectors=preprocess.vectors,
-                                          embedding=preprocess.embedding,
-                                          embedding_matrix=preprocess.embedding_matrix)
+                features = FeaturesObject()
+                for attribute in params['attributes']:
+                    features[attribute] = preprocess[attribute]
                 datasetDes.features = features
                 datasetDes.featuresShape = getFileShape(features.feature)
                 break
-        train = FeaturesObject(label_name=datasetDes.features.label_name)
-        test = FeaturesObject(label_name=datasetDes.features.label_name)
+        train = FeaturesObject(label_id=datasetDes.features.label_id)
+        test = FeaturesObject(label_id=datasetDes.features.label_id)
         datasetDes.train = train
         datasetDes.test = test
 
-    elif datasetDes.datasetType == '批处理特征集':
+    elif datasetInit.datasetType == '特征数据集' and datasetDes.datasetType == '特征数据集':
+        datasetDes.features = datasetInit.features
+        datasetDes.featuresShape = datasetInit.featuresShape
+        datasetDes.train = datasetInit.train
+        datasetDes.test = datasetInit.test
+
+    elif datasetInit.datasetType == '批处理数据集' and datasetDes.datasetType == '批处理特征集':
         for vector in vectors[:]:
             if vector['deleted'] == '已删除':
                 vectors.remove(vector)
         for vector in vectors:
             vector['datasetid'] = datasetDes.id
         data = dealPipeline(vectors, int(params['pipeline']))
-        features = FeaturesBatchObject(label=data['label'], label_name=data['label_name'],
+        features = FeaturesBatchObject(label=data['label'], label_id=data['label_id'],
                                        embedding_matrix=data['embedding_matrix'], embedding=data['embedding'],
                                        feature=data['feature'])
         vectors_insert(data['vectors'], '批处理特征集')
         datasetDes.features = features
+
+    elif datasetInit.datasetType == '批处理特征集' and datasetDes.datasetType == '批处理特征集':
+        for vector in vectors[:]:
+            if vector['deleted'] == '已删除':
+                vectors.remove(vector)
+        for vector in vectors:
+            vector['datasetid'] = datasetDes.id
+        vectors_insert(vectors, '批处理特征集')
+        datasetDes.features = datasetInit.features
 
     datasetDes.analyseStatus = '解析完成'
     datasetDes.save()

@@ -27,7 +27,7 @@ def setDataToPreprocessDataset(dataset, preprocessIndex, preprocessName, preproc
     preprocessObj = PreprocessObject(id=preprocessIndex, preprocessName=preprocessName, preprocessType=preprocessType,
                                      feature=data['feature'], embedding=data['embedding'],
                                      embedding_matrix=data['embedding_matrix'], label=data['label'],
-                                     label_name=data['label_name'])
+                                     label_id=data['label_id'])
     for vector in data['vectors']:
         vector['preprocessid'] = preprocessIndex
     vectors_insert(data['vectors'], '预处理数据集')
@@ -53,7 +53,7 @@ def getDataForFront(dataset, preprocessID):
 def dealPipeline(vectors, pipelineID):
     pipeline = Pipeline.objects(id=pipelineID).first()
     pipelines = pipeline.pipelines
-    data = {'vectors': vectors, 'label_name': '', 'label': '', 'embedding': '', 'embedding_matrix': '', 'feature': ''}
+    data = {'vectors': vectors, 'label_id': '', 'label': '', 'embedding': '', 'embedding_matrix': '', 'feature': ''}
     for vector in data['vectors']:
         if 'text1' in vector:
             vector['originalText1'] = vector['text1']
