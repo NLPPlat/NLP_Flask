@@ -1,14 +1,8 @@
 from flask import request
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from mongoengine import Q
 
 from . import api
-from app.models.dataset import *
-from app.models.venation import *
-from app.utils.vector_uitls import *
-from app.utils.response_code import *
 from app.utils.dataset_utils import *
-from app.utils.file_utils import *
 from app.utils.task_utils import *
 from app.utils.permission_utils import *
 
@@ -100,7 +94,7 @@ def datasetCopy():
 
     # 读取数据集信息
     datasetInit = Dataset.objects(id=int(datasetInitID)).first()
-    if not datasetReadPermission(datasetInit, username):
+    if not readPermission(datasetInit, username):
         return noPeimissionReturn()
     datasetDesID = copyManage(datasetInit, copyDes, username, params)
     return {'code': RET.OK, 'data': {'datasetDesID': datasetDesID}}
@@ -117,7 +111,7 @@ def datasetInfoFetch():
 
     # 查找数据集
     datasetQuery = Dataset.objects(id=int(datasetID)).first()
-    if not datasetReadPermission(datasetQuery, username):
+    if not readPermission(datasetQuery, username):
         return noPeimissionReturn()
     dataResult = datasetQuery.to_mongo().to_dict()
     return {'code': RET.OK, 'data': dataResult}
@@ -135,7 +129,7 @@ def datasetInfoUpdate():
 
     # 查找数据集
     datasetQuery = Dataset.objects(id=int(datasetID)).first()
-    if not datasetWritePermission(datasetQuery, username):
+    if not writePermission(datasetQuery, username):
         return noPeimissionReturn()
     for key in infos:
         datasetQuery[key] = infos[key]
@@ -156,7 +150,7 @@ def datasetInfoVerity():
 
     # 修改任务信息
     datasetQuery = Dataset.objects(id=int(datasetID)).first()
-    if not datasetWritePermission(datasetQuery, username):
+    if not writePermission(datasetQuery, username):
         return noPeimissionReturn()
     datasetQuery.taskName = taskName
     datasetQuery.desc = desc
@@ -176,7 +170,7 @@ def datasetDelete():
 
     # 查找判断并删除
     datasetQuery = Dataset.objects(id=int(datasetID)).first()
-    if not datasetWritePermission(datasetQuery, username):
+    if not writePermission(datasetQuery, username):
         return noPeimissionReturn()
     datasetQuery.delete()
     return {'code': RET.OK}
@@ -196,7 +190,7 @@ def datasetVectorsFetch():
 
     # 数据库查询
     datasetQuery = Dataset.objects(id=int(datasetID)).first()
-    if not datasetReadPermission(datasetQuery, username):
+    if not readPermission(datasetQuery, username):
         return noPeimissionReturn()
     count, vectors = vectors_select_divide(datasetID, deleted, limit, page, datasetQuery.datasetType)
     return {'code': RET.OK, 'data': {'items': vectors, 'total': count}}
@@ -214,7 +208,7 @@ def datasetVectorFetch():
 
     # 数据查询
     datasetQuery = Dataset.objects(id=int(datasetID)).first()
-    if not datasetReadPermission(datasetQuery, username):
+    if not readPermission(datasetQuery, username):
         return noPeimissionReturn()
     vector = vectors_select_one(datasetID, vectorID)
     return {'code': RET.OK, 'data': {'vector': vector}}
@@ -233,7 +227,7 @@ def datasetVectorUpdate():
 
     # 数据格式转换
     datasetQuery = Dataset.objects(id=int(datasetID)).first()
-    if not datasetWritePermission(datasetQuery, username):
+    if not writePermission(datasetQuery, username):
         return noPeimissionReturn()
     vectorDict = json.loads(vector)
     if 'edit' in vectorDict:
@@ -255,7 +249,7 @@ def groupVectorsFetch():
 
     # 数据库查询
     datasetQuery = OriginalDataset.objects(id=int(datasetID)).first()
-    if not datasetReadPermission(datasetQuery, username):
+    if not readPermission(datasetQuery, username):
         return noPeimissionReturn()
     count, vectors = vectors_select(datasetID, {'group': group, 'deleted': '未删除'})
     return {'code': RET.OK, 'data': {'vectors': vectors, 'count': count}}
@@ -295,7 +289,7 @@ def datasetTotalInfoFetch():
 
     # 数据查询
     datasetQuery = OriginalDataset.objects(id=int(datasetID)).first()
-    if not datasetReadPermission(datasetQuery, username):
+    if not readPermission(datasetQuery, username):
         return noPeimissionReturn()
     if type == 0:
         min = vectors_select_first(datasetID).vectorid

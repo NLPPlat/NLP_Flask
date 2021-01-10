@@ -10,6 +10,8 @@
 
 from abc import ABCMeta,abstractmethod,abstractproperty
 
+from app.models.resource import *
+
 class PreProcessUtil():
     @abstractmethod
     def cut(self,text):
@@ -29,3 +31,8 @@ class PreProcessUtil():
                 if word != '\t' and word.strip() !='':
                     out_list.append(item)
         return out_list
+
+def stopwordsListReader(stopwordsFileName):
+    stopwordsFile = Resource.objects(resourceName=stopwordsFileName).first()
+    stopwordsList = [line.strip() for line in open(stopwordsFile.url, encoding='UTF-8').readlines()]
+    return stopwordsList

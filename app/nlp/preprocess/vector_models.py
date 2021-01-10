@@ -28,9 +28,9 @@ def Word2vec(data, params, type):
                         hashfxn=hash, iter=int(params['iter']),
                         trim_rule=params['trim_rule'], sorted_vocab=int(params['sorted_vocab']),
                         batch_words=int(params['batch_words']))
-    modelURL=getFileURL('word2vec.txt', app)
+    modelURL = getFileURL('word2vec.txt', app)
     model.wv.save_word2vec_format(modelURL, binary=False)
-    data['embedding']=modelURL
+    data['embedding'] = modelURL
     return data
 
 
@@ -51,7 +51,7 @@ def Doc2vec(data, params, type):
     model = dc.Doc2Vec(document, size=int(params['size']), alpha=int(params['alpha']), window=int(params['window']),
                        min_count=int(params['min_count']), max_vocab_size=params['max_vocab_size'],
                        sample=int(params['sample']), seed=int(params['seed']), workers=int(params['workers']))
-    modelURL=getFileURL('doc2vec.txt', app)
+    modelURL = getFileURL('doc2vec.txt', app)
     model.wv.save_word2vec_format(modelURL, binary=False)
-    data['embedding']=modelURL
+    data['embedding'] = modelURL
     return data

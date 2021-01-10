@@ -20,4 +20,4 @@ class Pipeline(db.DynamicDocument):
     pipelineName = db.StringField(required=True)
     publicity = db.StringField(required=True)
     pipelines = db.EmbeddedDocumentListField(PipelineObject)
-    datetime = db.DateTimeField(default=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+    datetime = db.DateTimeField()

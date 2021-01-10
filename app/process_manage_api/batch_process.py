@@ -1,19 +1,13 @@
-import copy
-import numpy as np
-from flask import request, current_app
-from flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
+from flask import request
+from flask_jwt_extended import jwt_required, get_jwt_identity
 
 from . import api
-from manage import celery, app
-from app.models.dataset import *
-from app.models.model import *
+from manage import celery
 from app.nlp.batch_process import *
 from app.utils.vector_uitls import *
-from app.utils.response_code import *
-from app.utils.codehub_utils import *
-from app.utils.file_utils import *
 from app.utils.venation_utils import *
 from app.utils.task_utils import *
+from app.utils.permission_utils import *
 
 
 # 某个训练模型代码运行
@@ -33,12 +27,13 @@ def batchRun():
 
     # 数据库查询
     datasetQuery = FeaturesBatchDataset.objects(id=datasetID).first()
-    if datasetQuery and username == datasetQuery.username:
-        trainedmodel = TrainedModel.objects(id=trainedModelID).first()
-        # 创建任务
-        taskID = createTask('批处理-' + datasetQuery.taskName, '批处理', datasetQuery.id, datasetQuery.taskName,
-                            username)
-        batchRunManage.delay(taskID,datasetQuery, trainedmodel, operatorOn, operatorCode)
+    if not writePermission(datasetQuery, username):
+        return noPeimissionReturn()
+    trainedmodel = TrainedModel.objects(id=trainedModelID).first()
+    # 创建任务
+    taskID = createTask('批处理-' + datasetQuery.taskName, '批处理', datasetQuery.id, datasetQuery.taskName,
+                        username)
+    batchRunManage.delay(taskID,datasetQuery, trainedmodel, operatorOn, operatorCode)
     return {'code': RET.OK}
 
 

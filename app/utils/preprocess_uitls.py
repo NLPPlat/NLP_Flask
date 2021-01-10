@@ -4,6 +4,7 @@ import numpy as np
 
 from app.models.dataset import *
 from app.models.pipeline import *
+from app.models.resource import *
 from app.utils.vector_uitls import *
 from app.utils.common_utils import *
 
@@ -64,3 +65,6 @@ def dealPipeline(vectors, pipelineID):
                                 pipeline.taskType, -1, -1, preprocess.pipeline)
 
     return data
+
+
+

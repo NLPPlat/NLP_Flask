@@ -4,14 +4,10 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from . import api
 from manage import celery, app
 from app.nlp import preprocess
-from app.models.dataset import *
-from app.models.operator import *
-from app.models.resource import *
-from app.utils.vector_uitls import *
-from app.utils.response_code import *
-from app.utils.codehub_utils import *
 from app.utils.file_utils import *
 from app.utils.preprocess_uitls import *
+from app.utils.permission_utils import *
+
 
 
 # 某个数据集预处理列表获取
@@ -25,10 +21,9 @@ def preprocessStatusFetch():
 
     # 数据库查询
     datasetQuery = PreprocessDataset.objects(id=int(datasetID)).first()
-    if datasetQuery and (username == datasetQuery.username or datasetQuery.publicity == '公开'):
-        return {'code': RET.OK, 'data': {'items': datasetQuery.preprocessStatus}}
-    else:
-        return {'code': RET.FORBBIDEN, 'message': error_map[RET.FORBBIDEN]}
+    if not readPermission(datasetQuery, username):
+        return noPeimissionReturn()
+    return {'code': RET.OK, 'data': {'items': datasetQuery.preprocessStatus}}
 
 
 # 某个数据集新增预处理步骤
@@ -46,16 +41,15 @@ def preprocessAdd():
 
     # 数据库查询并修改
     datasetQuery = PreprocessDataset.objects(id=int(datasetID)).first()
-    if datasetQuery and username == datasetQuery.username:
-        previousID = datasetQuery.preprocessStatus[-1]['id']
-        datasetQuery.preprocessStatus.append(
-            {'id': previousID + 1, 'preprocessName': preprocessAdd[1], 'preprocessType': preprocessAdd[0],
-             'previousProcessID': previousProcessID, 'sparkSupport': sparkSupport, 'preprocessStatus': '未开始',
-             'preprocessParams': preprocessParams})
-        datasetQuery.save()
-        return {'code': RET.OK}
-    else:
-        return {'code': RET.FORBBIDEN, 'message': error_map[RET.FORBBIDEN]}
+    if not writePermission(datasetQuery, username):
+        return noPeimissionReturn()
+    previousID = datasetQuery.preprocessStatus[-1]['id']
+    datasetQuery.preprocessStatus.append(
+        {'id': previousID + 1, 'preprocessName': preprocessAdd[1], 'preprocessType': preprocessAdd[0],
+         'previousProcessID': previousProcessID, 'sparkSupport': sparkSupport, 'preprocessStatus': '未开始',
+         'preprocessParams': preprocessParams})
+    datasetQuery.save()
+    return {'code': RET.OK}
 
 
 # 某个数据集某个预处理向量查看
@@ -74,11 +68,10 @@ def preprocessVectorsFetch():
 
     # 读取数据库
     datasetQuery = PreprocessDataset.objects(id=datasetID).first()
-    if datasetQuery and (username == datasetQuery.username or datasetQuery.publicity == '公开'):
-        count, vectors = vectors_select_divide_preprocess(datasetID, preprocessID, limit, page)
-        return {'code': RET.OK, 'data': {'items': vectors, 'total': count}}
-    else:
-        return {'code': RET.FORBBIDEN, 'message': error_map[RET.FORBBIDEN]}
+    if not readPermission(datasetQuery, username):
+        return noPeimissionReturn()
+    count, vectors = vectors_select_divide_preprocess(datasetID, preprocessID, limit, page)
+    return {'code': RET.OK, 'data': {'items': vectors, 'total': count}}
 
 
 # 某个数据集某个预处理步骤数据查看
@@ -93,11 +86,10 @@ def preprocessDataFetch():
 
     # 读取数据库
     datasetQuery = PreprocessDataset.objects(id=datasetID).first()
-    if datasetQuery and (username == datasetQuery.username or datasetQuery.publicity == '公开'):
-        preprocessObj = getDataForFront(datasetQuery, preprocessID)
-        return {'code': RET.OK, 'data': {'preprocessObj': preprocessObj}}
-    else:
-        return {'code': RET.FORBBIDEN, 'message': error_map[RET.FORBBIDEN]}
+    if not readPermission(datasetQuery, username):
+        return noPeimissionReturn()
+    preprocessObj = getDataForFront(datasetQuery, preprocessID)
+    return {'code': RET.OK, 'data': {'preprocessObj': preprocessObj}}
 
 
 # 某个数据集某个预处理向量修改
@@ -114,21 +106,20 @@ def preprocessUpload():
 
     datasetQuery = PreprocessDataset.objects(id=datasetID).first()
     preprocessObj = datasetQuery.data.filter(id=preprocessID).first()
-    if datasetQuery and username == datasetQuery.username:
-        if resourceSelect == '':
-            file = request.files['file']
-            filename = file.filename
-            fileurl = getFileURL(filename, app)
-            file.save(fileurl)
-            preprocessObj[nature] = fileurl
-            datasetQuery.save()
-        else:
-            resource = Resource.objects(id=int(resourceSelect)).first()
-            preprocessObj[nature] = resource.url
-            datasetQuery.save()
-        return {'code': RET.OK}
+    if not writePermission(datasetQuery, username):
+        return noPeimissionReturn()
+    if resourceSelect == '':
+        file = request.files['file']
+        filename = file.filename
+        fileurl = getFileURL(filename, app)
+        file.save(fileurl)
+        preprocessObj[nature] = fileurl
+        datasetQuery.save()
     else:
-        return {'code': RET.FORBBIDEN, 'message': error_map[RET.FORBBIDEN]}
+        resource = Resource.objects(id=int(resourceSelect)).first()
+        preprocessObj[nature] = resource.url
+        datasetQuery.save()
+    return {'code': RET.OK}
 
 
 # 某个数据集某个预处理数据导出
@@ -144,15 +135,14 @@ def preprocessDownload():
 
     # 文件导出
     datasetQuery = PreprocessDataset.objects(id=datasetID).first()
-    if datasetQuery and (username == datasetQuery.username or datasetQuery.publicity == '公开'):
-        data = getDataFromPreprocessDataset(datasetQuery, preprocessID)
-        url = downloadRUL(data, content)
-        response = make_response(send_file(url))
-        response.headers['content-disposition'] = url.split('___')[-1]
-        response.headers['Access-Control-Expose-Headers'] = 'content-disposition'
-        return response
-    else:
-        return {'code': RET.FORBBIDEN, 'message': error_map[RET.FORBBIDEN]}
+    if not readPermission(datasetQuery, username):
+        return noPeimissionReturn()
+    data = getDataFromPreprocessDataset(datasetQuery, preprocessID)
+    url = downloadRUL(data, content)
+    response = make_response(send_file(url))
+    response.headers['content-disposition'] = url.split('___')[-1]
+    response.headers['Access-Control-Expose-Headers'] = 'content-disposition'
+    return response
 
 
 # 某个数据集执行某个预处理步骤
@@ -167,11 +157,10 @@ def preprocessDeal():
 
     # 数据库查询修改、异步处理任务
     datasetQuery = PreprocessDataset.objects(id=int(datasetID)).first()
-    if datasetQuery and username == datasetQuery.username:
-        preprocessManage.delay(datasetQuery, preprocessIndex)
-        return {'code': RET.OK}
-    else:
-        return {'code': RET.FORBBIDEN, 'message': error_map[RET.FORBBIDEN]}
+    if not writePermission(datasetQuery, username):
+        return noPeimissionReturn()
+    preprocessManage.delay(datasetQuery, preprocessIndex)
+    return {'code': RET.OK}
 
 
 # 预处理控制层

@@ -6,6 +6,8 @@ from . import label_encoder
 from app.models.operator import *
 from app.utils.codehub_utils import *
 
+from .utils.pre_process_util import *
+
 # 预处理类型与文本列数对应表
 preprocessTypeMap = {
     '通用单文本分类': ['text1'],
@@ -72,9 +74,11 @@ def postagging(data, params, type, master=-1):
 
 
 def stopwords(data, params, type, master=-1):
-    stopwordsList = [line.strip() for line in open(r'e:/hit_stopwords.txt', encoding='UTF-8').readlines()]
+    stopwordsFileName = params['list']
+    stopwordsList = stopwordsListReader(stopwordsFileName)
     if master == -1:
         data = base_methods.stopwords(data, {'tool': stopwordsList, 'from': '分词'}, type)
     else:
         data = base_methods.stopwords_spark(data, {'tool': stopwordsList, 'from': '分词'}, type, master)
     return data
+

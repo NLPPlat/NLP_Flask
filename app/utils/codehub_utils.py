@@ -40,10 +40,15 @@ class __Autonomy__(object):
         pass
 
 
+def codeReplace(code):
+    return code.replace('\t', '    ')
+
+
 # 算子执行
 def operatorRunUtil(code, datasetIDForUse):
     setDataset(datasetIDForUse)
     code = code + codeForOperator
+    code = codeReplace(code)
     current = sys.stdout
     a = __Autonomy__()
     sys.stdout = a
@@ -61,6 +66,7 @@ def modelRunUtil(code, datasetIDForUse, trainedModelForUse):
     setDataset(datasetIDForUse)
     setTrainedModel(trainedModelForUse)
     code = code + codeForModel
+    code = codeReplace(code)
     current = sys.stdout
     a = __Autonomy__()
     sys.stdout = a
@@ -76,6 +82,7 @@ def modelRunUtil(code, datasetIDForUse, trainedModelForUse):
 # 超参数读取
 def paramsFetchUtil(code):
     code = code + codeForParams
+    code = codeReplace(code)
     current = sys.stdout
     a = __Autonomy__()
     sys.stdout = a
@@ -86,4 +93,3 @@ def paramsFetchUtil(code):
     except Exception as e:
         sys.stdout = current
         return traceback.format_exc()
-

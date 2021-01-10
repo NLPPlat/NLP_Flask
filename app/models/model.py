@@ -12,7 +12,7 @@ class BaseModel(db.Document):
     publicity = db.StringField()
     desc = db.StringField()
     code = db.StringField()
-    plat = db.StringField()
+    platType = db.StringField()
 
 
 # 训练的模型
@@ -28,7 +28,7 @@ class TrainedModel(db.Document):
     endtime = db.DateTimeField()
     desc = db.StringField()
     code = db.StringField()
-    plat = db.StringField()
+    platType = db.StringField()
     model = db.StringField()
     type = db.StringField()
     trainStatus = db.StringField(default='未开始')
