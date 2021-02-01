@@ -1,12 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-@Time ： 2020/10/15 14:09
-@Auth ： sora
-@File ：pre_process_controller.py
-@IDE ：PyCharm
-@Motto：ABC(Always Be Coding)
-
-"""
 from app.nlp.preprocess.service.pre_process.common_pre_process_service import CommonPreProcessService
 from app.nlp.preprocess.service.pre_process.spark_pre_process_service import SparkPreProcessService
 

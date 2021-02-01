@@ -1,10 +1,6 @@
 import copy
-import json
-import numpy as np
 
-from app.models.dataset import *
 from app.models.pipeline import *
-from app.models.resource import *
 from app.utils.vector_uitls import *
 from app.utils.common_utils import *
 
@@ -14,7 +10,10 @@ from app.nlp.preprocess import *
 # 从数据库中读取向量
 def getDataFromPreprocessDataset(dataset, preprocessIndex):
     # 读取数据
-    preprocessObj = dataset.data.filter(id=preprocessIndex).first().to_mongo().to_dict()
+    if preprocessIndex == -1:
+        preprocessObj = dataset.data.filter(id=preprocessIndex).first().to_mongo().to_dict()
+    else:
+        preprocessObj = dataset.data.filter(id=preprocessIndex).first().to_mongo().to_dict()
     vectors = json.loads(vectors_select_all_preprocess(dataset.id, preprocessIndex).to_json())
     # 复制原数据
     newData = copy.deepcopy(preprocessObj)
@@ -65,6 +64,3 @@ def dealPipeline(vectors, pipelineID):
                                 pipeline.taskType, -1, -1, preprocess.pipeline)
 
     return data
-
-
-

@@ -44,7 +44,7 @@ def datasetListFetch():
             q = q & (Q(username__ne=username) & Q(publicity='公开'))
 
     # 设置独立查询条件
-    analyseStatusFilter = ['解析完成']
+    analyseStatusFilter = ['已就绪']
     if datasetType == '训练数据集' or datasetType == '批处理数据集':
         analyseStatusFilter = info.getlist('analyseStatus[]')
     elif datasetType == '标注数据集':
@@ -187,6 +187,7 @@ def datasetVectorsFetch():
     limit = int(info.get('limit'))
     page = int(info.get('page'))
     username = get_jwt_identity()
+    print('ok')
 
     # 数据库查询
     datasetQuery = Dataset.objects(id=int(datasetID)).first()

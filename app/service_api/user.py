@@ -1,10 +1,11 @@
 from flask import request, render_template, jsonify
 from flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity, get_raw_jwt
 from werkzeug.security import generate_password_hash, check_password_hash
+
 from . import api
 from app import jwt
-from app.models.user import User
-
+from app.utils.permission_utils import *
+from app.utils.response_code import *
 
 
 # 注册
@@ -20,9 +21,11 @@ def register():
         password_hash = generate_password_hash(password)
         avatar = 'https://wpimg.wallstcn.com/f778738c-e4f8-4870-b634-56703b4acafe.gif'
         user = User(username=username, name=name, introduction=introduction, password=password_hash,
-                           avatar=avatar)
+                    avatar=avatar, status='正常')
         user.save()
-        return jsonify({"code": 200, "message": "register_success"})
+        wallet = Wallet(username=username)
+        wallet.save()
+        return jsonify({"code": RET.OK, "message": "register_success"})
     else:
         return jsonify({"code": 400, "message": "user_already_exists"})
 
@@ -36,7 +39,8 @@ def login():
     user = User.objects(username=username).first()
     if user and check_password_hash(user.password, password):
         access_token = create_access_token(identity=username)
-        return jsonify({"code": 200, "message": "login_success", "data": {"token": access_token, "username": username}})
+        return jsonify(
+            {"code": RET.OK, "message": "login_success", "data": {"token": access_token, "username": username}})
     else:
         return jsonify({"code": 400, "message": "login_fail"})
 
@@ -46,14 +50,43 @@ def login():
 @jwt_required
 def getInfo():
     user = User.objects(username=get_jwt_identity()).first()
-    return jsonify({"code": 200, "data": {
-        "username":user.username,
-        "datetime": user.datetime,
+    return jsonify({"code": RET.OK, "data": {
+        "username": user.username,
         "roles": user.roles,
-        "introduction": user.introduction,
-        "avatar": user.avatar,
-        "name": user.name
+        "avatar": user.avatar
     }})
+
+
+# 获取用户全部信息
+@api.route('/user/infos', methods=['GET'])
+@jwt_required
+def getAllInfo():
+    user = User.objects(username=get_jwt_identity()).first()
+    return jsonify({"code": RET.OK, "data": {
+        'username': user.username,
+        'datetime': user.datetime,
+        'name': user.name,
+        'introduction': user.introduction,
+        'email': user.email,
+        'phone': user.phone
+    }})
+
+
+# 用户信息修改
+@api.route('/user/infos', methods=['PATCH'])
+@jwt_required
+def modifyInfo():
+    info = request.json
+    username = info.get('username')
+    realUsername = get_jwt_identity()
+    if not userinfoWritePermission(username, realUsername):
+        return noPeimissionReturn()
+    user = User.objects(username=username).first()
+    for key in info:
+        if key != 'username' and key != 'password':
+            user[key] = info.get(key)
+    user.save()
+    return {'code': RET.OK}
 
 
 # 登出用户token集合

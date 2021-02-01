@@ -3,9 +3,8 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 
 from . import api
 from manage import app
-from app.models.model import *
 from app.utils.file_utils import *
-from app.utils.time_utils import *
+from app.utils.venation_utils import *
 
 # 训练模型上传
 @api.route('/trainedmodel/trainedmodels', methods=['POST'])
@@ -26,5 +25,6 @@ def trainedmodelUpload():
                                modelName=info.get('trainedmodelName'), desc=info.get('desc'),
                                publicity=info.get('publicity'), model=fileurl,datetime=getTime())
     trainedmodel.save()
+    createNode([], '训练模型对象', trainedmodel.id)
     return "success"
 

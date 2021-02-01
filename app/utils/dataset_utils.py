@@ -1,13 +1,8 @@
 import json
 
 from manage import celery
-from app.models.dataset import *
-from app.models.venation import *
-from app.utils.vector_uitls import *
-from app.utils.common_utils import *
 from app.utils.preprocess_uitls import *
 from app.utils.venation_utils import *
-from app.utils.time_utils import *
 from app.utils.task_utils import *
 
 
@@ -176,7 +171,7 @@ def copyVectors(taskID, datasetInit, datasetDes, params):
         vectors_insert(vectors, '批处理特征集')
         datasetDes.features = datasetInit.features
 
-    datasetDes.analyseStatus = '解析完成'
+    datasetDes.analyseStatus = '已就绪'
     datasetDes.save()
     completeTask(taskID)
     return '拷贝成功！'

@@ -53,11 +53,11 @@ def trainFileUploadAnalyse(fileurl, originalDataset, taskID):
     vectors_insert(vectors)
     if groupOn:
         originalDataset.groupOn = 'on'
-    # 解析完成，状态写入
-    originalDataset.analyseStatus = '解析完成'
+    # 已就绪，状态写入
+    originalDataset.analyseStatus = '已就绪'
     originalDataset.save()
     completeTask(taskID)
-    return '解析完成'
+    return '已就绪'
 
 
 # 批处理数据集文件上传
@@ -104,8 +104,8 @@ def batchFileUploadAnalyse(fileurl, originalBatchDataset, taskID):
     vectors_insert(vectors, '批处理数据集')
     if groupOn:
         originalBatchDataset.groupOn = 'on'
-    # 解析完成，状态写入
-    originalBatchDataset.analyseStatus = '解析完成'
+    # 已就绪，状态写入
+    originalBatchDataset.analyseStatus = '已就绪'
     originalBatchDataset.save()
     completeTask(taskID)
-    return '解析完成'
+    return '已就绪'

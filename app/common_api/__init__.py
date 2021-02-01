@@ -8,3 +8,4 @@ from . import operator
 from . import model
 from . import pipeline
 from . import resource
+from . import arrange

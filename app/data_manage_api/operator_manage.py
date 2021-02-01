@@ -6,6 +6,24 @@ from app.models.operator import *
 from app.utils.codehub_utils import *
 from app.utils.permission_utils import *
 
+dataCleaningAPI = [{
+    'name': 'getCleaningData()',
+    'content': '返回数据集所有可用于清洗的向量数据'
+}]
+
+preprocessAPI = [{
+    'name': 'getPreprocessData(id=-1)',
+    'content': 'id为该数据集预处理步骤的id。返回预处理步骤所有属性的数据，id=-1为最后一个步骤。'
+}]
+
+batchProcessAPI = [{
+    'name': 'getBatchData()',
+    'content': '返回该批处理数据集所有属性的数据。'
+},{
+    'name': 'getTrainedModel(modelName)',
+    'content': 'modelName为已训练模型的名称。返回模型URL地址。'
+}]
+
 
 # 某个算子保存
 @api.route('/operator/operators/ID', methods=['POST'])
@@ -68,3 +86,18 @@ def codeRun():
     # 运行代码
     result = operatorRunUtil(code, datasetID)
     return {'code': RET.OK, 'data': str(result)}
+
+
+# 某个算子类别API文档获取
+@api.route('/operator/operatorTypes/ID/API', methods=['GET'])
+@jwt_required
+def apiFetch():
+    info = request.values
+    operatorType = info.get('operatorType')
+
+    if (operatorType == '数据清洗算子'):
+        return {'code': RET.OK, 'data': {'API': dataCleaningAPI}}
+    elif (operatorType == '预处理算子'):
+        return {'code': RET.OK, 'data': {'API': preprocessAPI}}
+    elif (operatorType == '批处理算子'):
+        return {'code': RET.OK, 'data': {'API': batchProcessAPI}}

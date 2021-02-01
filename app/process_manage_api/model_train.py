@@ -1,4 +1,4 @@
-from flask import request, make_response, send_file
+from flask import request, make_response, send_file, send_from_directory
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
 from . import api

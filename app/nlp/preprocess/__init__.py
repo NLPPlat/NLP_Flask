@@ -41,8 +41,6 @@ def preprocessManage(preprocessType, preprocessName, data, params, taskType, dat
         elif preprocessType == '特征生成':
             if preprocessName == '序列化':
                 data = features_construction.padSequence(data, params, type)
-            elif preprocessName == 'EmbeddingMatrix':
-                data = features_construction.EmbeddingMatrix(data, params, type)
 
         elif preprocessType == '标签映射':
             if preprocessName == '单标签数值映射':
@@ -52,7 +50,9 @@ def preprocessManage(preprocessType, preprocessName, data, params, taskType, dat
 
         elif preprocessType == '自定义算子':
             code = Operator.objects(operatorName=preprocessName).first().code
+            print(code)
             data = operatorRunUtil(code, datasetID)
+            print(data)
 
     return data
 
@@ -81,4 +81,3 @@ def stopwords(data, params, type, master=-1):
     else:
         data = base_methods.stopwords_spark(data, {'tool': stopwordsList, 'from': '分词'}, type, master)
     return data
-

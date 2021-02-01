@@ -9,6 +9,13 @@ codehub_model = None
 # 储存超参数列表
 codehub_params = None
 
+codePre = '''
+from app.dataAPI.data_cleaning import *
+from app.dataAPI.preprocess import *
+from app.dataAPI.batch_process import *
+
+'''
+
 codeForOperator = '''
 operator=Operator()
 global codehub_result
@@ -47,7 +54,7 @@ def codeReplace(code):
 # 算子执行
 def operatorRunUtil(code, datasetIDForUse):
     setDataset(datasetIDForUse)
-    code = code + codeForOperator
+    code = codePre + code + codeForOperator
     code = codeReplace(code)
     current = sys.stdout
     a = __Autonomy__()

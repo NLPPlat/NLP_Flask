@@ -30,17 +30,20 @@ def create_app(config_name):
     return app
 
 
-
- # 注册蓝图
+# 注册蓝图
 def register_blueprint(app):
     from app import common_api
     from app import service_api
     from app import process_manage_api
     from app import data_manage_api
+    from app import expand_api
+    from app import admin_api
     app.register_blueprint(common_api.api, url_prefix='/common')
     app.register_blueprint(service_api.api, url_prefix='/service')
     app.register_blueprint(process_manage_api.api, url_prefix='/process-manage')
     app.register_blueprint(data_manage_api.api, url_prefix='/data-manage')
+    app.register_blueprint(expand_api.api, url_prefix='/expand')
+    app.register_blueprint(admin_api.api, url_prefix='/admin')
 
     return
 
@@ -54,7 +57,7 @@ def create_celery(app):
 
     )
     celery.conf.update(app.config)
-    platforms.C_FORCE_ROOT=True
+    platforms.C_FORCE_ROOT = True
 
     class ContextTask(celery.Task):
         def __call__(self, *args, **kwargs):

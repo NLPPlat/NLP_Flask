@@ -9,7 +9,6 @@ from app.utils.preprocess_uitls import *
 from app.utils.permission_utils import *
 
 
-
 # 某个数据集预处理列表获取
 @api.route('/pre-process/datasets/ID/preprocesses', methods=['GET'])
 @jwt_required
@@ -140,7 +139,8 @@ def preprocessDownload():
     data = getDataFromPreprocessDataset(datasetQuery, preprocessID)
     url = downloadRUL(data, content)
     response = make_response(send_file(url))
-    response.headers['content-disposition'] = url.split('___')[-1]
+    # response.headers['content-disposition'] = url.split('___')[-1]
+    response.headers['content-disposition'] = 'file.' + url.split('.')[-1]
     response.headers['Access-Control-Expose-Headers'] = 'content-disposition'
     return response
 
@@ -180,8 +180,8 @@ def preprocessManage(dataset, preprocessIndex):
 
     # 控制函数调用
     previousData = getDataFromPreprocessDataset(dataset, previousProcessIndex)
-    curData = preprocess.preprocessManage(preprocessType, preprocessName, previousData, params, taskType, master=-1,
-                                          pipeline=-1)
+    curData = preprocess.preprocessManage(preprocessType, preprocessName, previousData, params, taskType,
+                                          datasetID=dataset.id, master=-1, pipeline=-1)
     setDataToPreprocessDataset(dataset, preprocessIndex, preprocessName, preprocessType, curData)
 
     # 数据库状态更改

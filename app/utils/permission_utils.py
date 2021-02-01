@@ -25,6 +25,14 @@ def writePermission(data, username):
     return False
 
 
+# 用户信息写权限判断
+def userinfoWritePermission(username, realUsername):
+    user = User.objects(username=realUsername).first()
+    if username == realUsername or 'admin' in user.roles:
+        return True
+    return False
+
+
 # 重名判断
 def namePermission(dataName, dataType):
     if dataType == '数据集':
@@ -40,6 +48,7 @@ def namePermission(dataName, dataType):
 # 无权限返回值
 def noPeimissionReturn():
     return {'code': RET.FORBBIDEN, 'message': error_map[RET.FORBBIDEN]}
+
 
 # 重名返回值
 def repeatNameReturn():
